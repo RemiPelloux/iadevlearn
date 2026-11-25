@@ -52,10 +52,8 @@ function Dashboard() {
             <div className="flex items-center gap-3">
               <Avatar name={p.name} color={p.avatar} size="lg" />
               <div className="min-w-0">
-                <p className="text-sm text-fg-2">
-                  {p.name ? (doneCount ? t("learn.welcomeBackName", { name: p.name }) : t("learn.hello", { name: p.name })) : doneCount ? t("learn.welcomeBack") : t("learn.welcome")}
-                </p>
                 <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
+                  {p.name && <span className="text-fg-2">{doneCount ? t("learn.welcomeBackName", { name: p.name }) : t("learn.hello", { name: p.name })}. </span>}
                   {next ? (doneCount ? t("learn.nextTitle") : t("learn.firstTitle")) : t("learn.allDone")}
                 </h1>
               </div>
@@ -180,7 +178,7 @@ function Dashboard() {
                 return (
                   <li
                     key={a.id}
-                    title={`${title} — ${t(`badges.${a.id}.description` as MessageKey)}`}
+                    title={`${title}: ${t(`badges.${a.id}.description` as MessageKey)}`}
                     className={clsx(
                       "grid aspect-square place-items-center rounded-lg",
                       got ? "bg-warn-soft text-warn shadow-[inset_0_-2px_0_color-mix(in_oklab,var(--warn)_25%,transparent)]" : "bg-surface-2 text-fg-3 opacity-50",
@@ -217,7 +215,7 @@ const laneOf = (c: Chapter) => `var(--lane-${(c.number - 1) % 6})`;
 
 /** Horizontal offset of the n-th node on the winding path. */
 const OFFSETS = [0, 64, 96, 64, 0, -64, -96, -64];
-const ROW = 128;
+const ROW = 156;
 
 /** A chapter as a branch: its lessons are commits along a winding lane. */
 function ChapterTrail({ chapter, nextId }: { chapter: Chapter; nextId?: string }) {
@@ -403,11 +401,11 @@ function TrailNode({
   return (
     <li className="contents">
       {unlocked ? (
-        <Link href={`/learn/${lesson.id}`} className={cls} style={pos} aria-label={`${lesson.title} — ${status}`} title={status}>
+        <Link href={`/learn/${lesson.id}`} className={cls} style={pos} aria-label={`${lesson.title} (${status})`} title={status}>
           {label}
         </Link>
       ) : (
-        <div className={cls} style={pos} aria-label={`${lesson.title} — ${status}`} title={status} aria-disabled>
+        <div className={cls} style={pos} aria-label={`${lesson.title} (${status})`} title={status} aria-disabled>
           {label}
         </div>
       )}

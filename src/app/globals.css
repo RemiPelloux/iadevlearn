@@ -258,3 +258,64 @@ select {
 .bob {
   animation: bob 1.6s ease-in-out infinite;
 }
+
+/* The next control to press pulses gently. Reduced motion gets a steady outline instead. */
+@keyframes nudge {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-mark) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent-mark) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+[data-nudge="true"] {
+  animation: nudge 1.9s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-nudge="true"] {
+    outline: 2px solid var(--accent-mark);
+    outline-offset: 3px;
+  }
+}
+
+[data-motion="reduced"] [data-nudge="true"] {
+  outline: 2px solid var(--accent-mark);
+  outline-offset: 3px;
+}
+
+/* UI control names in docs and guides look like the control itself. */
+.ui-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  padding: 0.05em 0.45em;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 0.4em;
+  background: var(--elevated);
+  font-size: 0.88em;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent-mark) 28%, transparent);
+}
+
+@media print {
+  header,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}

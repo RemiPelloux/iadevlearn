@@ -274,7 +274,7 @@ export function runAgent(ctx: Ctx, tool: ToolId, rawPrompt: string, opts: RunOpt
       if (pm !== project.packageManager && !(lock in files)) {
         run.commands.push(`${pm} install`);
         say(`${S.bullet} ${S.bash(`${pm} install`)}`, "tool");
-        say(`${S.sub}${pm} warn: package.json says "packageManager": "${project.packageManager}" — created ${lock} anyway`, "warning");
+        say(`${S.sub}${pm} warn: package.json says "packageManager": "${project.packageManager}", but created ${lock} anyway`, "warning");
         files = { ...files, [lock]: `# ${lock} created by ${pm} install\n` };
         run.changed.push(lock);
       }

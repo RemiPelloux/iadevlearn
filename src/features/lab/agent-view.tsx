@@ -289,11 +289,16 @@ export function AgentView({ world, events, eventKey, compact, orca }: { world: W
           ))}
         </div>
         {orca && world.worktrees.length > 0 && <OrcaLanes world={world} compact />}
-        {run && !shown.preview && (
+        {run && !shown.preview ? (
           <>
             <AgentLoop run={run} compact />
             <PromptMeter run={run} compact />
           </>
+        ) : (
+          <div className="opacity-60">
+            <AgentLoop run={null} compact />
+            <p className="mt-2 text-[11px] text-fg-3">{l("Read, plan, act, verify, report: the loop lights up once the agent gets a prompt.", "Lire, planifier, agir, vérifier, rendre compte : la boucle s'allume dès que l'agent reçoit un prompt.")}</p>
+          </div>
         )}
       </div>
     );

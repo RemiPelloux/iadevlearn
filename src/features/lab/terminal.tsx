@@ -2,30 +2,16 @@
 
 import { clsx } from "clsx";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { ClipboardCopy, CornerDownLeft, Eraser, Lightbulb, Play, TextCursorInput } from "lucide-react";
-import { SESSION_PROMPT, TOOL_NAMES, type OutLine, type ToolId } from "@/engine";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
+import { AArrowDown, AArrowUp, ClipboardCopy, CornerDownLeft, Eraser, Lightbulb, Maximize2, Minimize2, Play, TextCursorInput } from "lucide-react";
+import { SESSION_PROMPT, TOOL_NAMES, type ToolId, type World } from "@/engine";
 import { explainTokens } from "@/features/docs/commands";
 import { useProgress } from "@/features/progress/store";
-import { useT, type T } from "@/i18n";
+import { useL, useT, type T } from "@/i18n";
 import { complete, highlight, type Completion } from "./completion";
 import { useLab, type TermEntry } from "./store";
+import { findRun, Reveal, RichLine, SessionBanner, splitBanner, StatusLine, TaskList, TOOL_TINT, UserTurn } from "./terminal-tui";
 
-const LINE_CLS: Record<OutLine["kind"], string> = {
-  out: "text-[var(--t-text)]",
-  muted: "text-[var(--t-muted)]",
-  error: "text-[var(--t-red)]",
-  success: "text-[var(--t-green)]",
-  hint: "text-[var(--t-orange)]",
-  added: "text-[var(--t-green)]",
-  removed: "text-[var(--t-red)]",
-  hunk: "text-[var(--t-blue)]",
-  commit: "text-[var(--t-yellow)]",
-  warning: "text-[var(--t-yellow)]",
-  agent: "text-[var(--t-text)] font-sans",
-  tool: "text-[var(--t-cyan)]",
-  info: "text-[var(--t-magenta)]",
-};
 
 export interface TerminalProps {
   mode: "assisted" | "real";
@@ -35,9 +21,28 @@ export interface TerminalProps {
   onModeChange?: (m: "assisted" | "real") => void;
   autoFocus?: boolean;
   compact?: boolean;
+  /** The lesson waits for a command: the input line is highlighted. */
+  awaitInput?: boolean;
+  /** The terminal fills the main area. */
+  maximized?: boolean;
+  onToggleMaximize?: () => void;
 }
 
-export function Terminal({ mode, suggestion, className, onModeChange, autoFocus, compact }: TerminalProps) {
+const FONT_KEY = "iadl-term-font";
+const readFont = () => {
+  try {
+    const n = Number(localStorage.getItem(FONT_KEY));
+    return n >= 11 && n <= 20 ? n : 14;
+  } catch {
+    return 14;
+  }
+};
+const subscribeFont = (cb: () => void) => {
+  window.addEventListener(FONT_KEY, cb);
+  return () => window.removeEventListener(FONT_KEY, cb);
+};
+
+export function Terminal({ mode, suggestion, className, onModeChange, autoFocus, compact, awaitInput, maximized, onToggleMaximize }: TerminalProps) {
   const entries = useLab((s) => s.entries);
   const world = useLab((s) => s.world);
   const run = useLab((s) => s.run);
@@ -51,7 +56,19 @@ export function Terminal({ mode, suggestion, className, onModeChange, autoFocus,
   const scrollRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const t = useT();
+  const l = useL();
   const locale = t.locale;
+  const font = useSyncExternalStore(subscribeFont, readFont, () => 14);
+  const changeFont = (d: number) => {
+    try {
+      localStorage.setItem(FONT_KEY, String(Math.min(20, Math.max(11, font + d))));
+    } catch {
+      /* storage unavailable */
+    }
+    window.dispatchEvent(new Event(FONT_KEY));
+  };
+  // Entries that exist when the terminal mounts (a restored transcript) appear at once; new replies reveal line by line.
+  const [freshFrom] = useState(() => entries.reduce((m, e) => Math.max(m, e.id), 0));
 
   const completions = useMemo(() => (value ? complete(value, world, locale).slice(0, 6) : []), [value, world, locale]);
   const ghost = useMemo(() => {
@@ -139,8 +156,8 @@ export function Terminal({ mode, suggestion, className, onModeChange, autoFocus,
   };
 
   return (
-    <div className={clsx("terminal flex h-full min-h-0 flex-col overflow-hidden bg-term font-mono text-[13px] leading-[1.55]", className)}>
-      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-white/5 px-3 text-xs text-[var(--t-muted)]">
+    <div className={clsx("terminal flex h-full min-h-0 flex-col overflow-hidden bg-term font-mono leading-[1.6]", className)} style={{ fontSize: compact ? 13 : font }}>
+      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-white/5 px-3 font-mono text-xs text-[var(--t-muted)]">
         <span className="truncate">
           {session ? TOOL_NAMES[session] : "bash"} — ~/project <span className="font-sans text-[var(--t-muted)]">{t("lab.terminal.simulated")}</span>
           {session && <span className="ml-2 font-sans text-[var(--t-orange)]">{t("lab.terminal.inSession", { tool: TOOL_NAMES[session] })}</span>}
@@ -161,12 +178,33 @@ export function Terminal({ mode, suggestion, className, onModeChange, autoFocus,
               ))}
             </div>
           )}
+          {!compact && (
+            <>
+              <button onClick={() => changeFont(-1)} disabled={font <= 11} className="rounded-md p-1 hover:bg-white/5 hover:text-white disabled:opacity-40" aria-label={l("Smaller text", "Texte plus petit")} title={l("Smaller text", "Texte plus petit")}>
+                <AArrowDown className="size-3.5" />
+              </button>
+              <button onClick={() => changeFont(1)} disabled={font >= 20} className="rounded-md p-1 hover:bg-white/5 hover:text-white disabled:opacity-40" aria-label={l("Bigger text", "Texte plus grand")} title={l("Bigger text", "Texte plus grand")}>
+                <AArrowUp className="size-3.5" />
+              </button>
+            </>
+          )}
           <button onClick={copyOutput} className="rounded-md p-1 hover:bg-white/5 hover:text-white pointer-coarse:p-2.5" aria-label={t("lab.terminal.copyAria")} title={t("lab.terminal.copyTitle")}>
             <ClipboardCopy className="size-3.5" />
           </button>
           <button onClick={clearTerminal} className="rounded-md p-1 hover:bg-white/5 hover:text-white pointer-coarse:p-2.5" aria-label={t("lab.terminal.clearAria")} title={t("lab.terminal.clearTitle")}>
             <Eraser className="size-3.5" />
           </button>
+          {onToggleMaximize && (
+            <button
+              onClick={onToggleMaximize}
+              className="rounded-md p-1 hover:bg-white/5 hover:text-white pointer-coarse:p-2.5"
+              aria-label={maximized ? l("Restore terminal size", "Rétablir la taille du terminal") : l("Maximize terminal", "Agrandir le terminal")}
+              title={maximized ? l("Restore terminal size", "Rétablir la taille du terminal") : l("Maximize terminal", "Agrandir le terminal")}
+              aria-pressed={!!maximized}
+            >
+              {maximized ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+            </button>
+          )}
           {copied && <span className="font-sans text-[11px] text-[var(--t-green)]">{t("lab.terminal.copied")}</span>}
         </div>
       </div>
@@ -187,7 +225,7 @@ export function Terminal({ mode, suggestion, className, onModeChange, autoFocus,
           </p>
         )}
         {entries.map((e) => (
-          <Entry key={e.id} entry={e} plainWords={t("lab.terminal.plainWords")} explain={e.explain} />
+          <Entry key={e.id} entry={e} plainWords={t("lab.terminal.plainWords")} explain={e.explain} world={world} fresh={e.id > freshFrom} />
         ))}
       </div>
 
@@ -224,7 +262,11 @@ export function Terminal({ mode, suggestion, className, onModeChange, autoFocus,
             </motion.ul>
           )}
         </AnimatePresence>
-        <label className="flex items-center gap-2">
+        <label
+          className={clsx("flex items-center gap-2 rounded-md", session && "rounded-lg border px-2.5 py-1.5 focus-within:bg-white/[0.03]")}
+          style={session ? { borderColor: `${TOOL_TINT[session]}99` } : undefined}
+          data-nudge={!!awaitInput && !value}
+        >
           <span className="sr-only">{t("lab.terminal.command")}</span>
           <Prompt branch={branch} session={session} />
           <div className="relative min-w-0 flex-1">
@@ -253,6 +295,7 @@ export function Terminal({ mode, suggestion, className, onModeChange, autoFocus,
               autoComplete="off"
               autoCorrect="off"
               enterKeyHint="go"
+              style={session ? { outline: "none" } : undefined}
               aria-describedby="term-help"
               className="w-full bg-transparent text-transparent caret-[var(--t-orange)] outline-none selection:bg-accent/40"
             />
@@ -265,6 +308,7 @@ export function Terminal({ mode, suggestion, className, onModeChange, autoFocus,
             <CornerDownLeft className="size-3.5" />
           </button>
         </label>
+        {session && !compact && <StatusLine world={world} tool={session} />}
         <p id="term-help" className="sr-only">
           {t("lab.terminal.help")}
         </p>
@@ -306,29 +350,41 @@ function Prompt({ branch, session }: { branch: string | null; session?: ToolId |
   );
 }
 
-function Entry({ entry, plainWords, explain }: { entry: TermEntry; plainWords: string; explain?: string }) {
+function Entry({ entry, plainWords, explain, world, fresh }: { entry: TermEntry; plainWords: string; explain?: string; world: World; fresh: boolean }) {
+  const tool = entry.session ?? entry.started ?? null;
+  const run = findRun(world, entry.runId);
+  const [banner, body] = entry.started ? splitBanner(entry.lines) : [[], entry.lines];
+  const highlighted = (entry.session ? [{ text: entry.input, cls: "text-white" }] : highlight(entry.input)).map((t, i) => (
+    <span key={i} className={t.cls}>
+      {t.text}
+    </span>
+  ));
   return (
-    <div className="mb-2">
-      <div className="flex flex-wrap gap-x-2">
-        <Prompt branch={entry.branch} session={entry.session} />
-        <span>
-          {(entry.session ? [{ text: entry.input, cls: "text-white" }] : highlight(entry.input)).map((t, i) => (
-            <span key={i} className={t.cls}>
-              {t.text}
-            </span>
-          ))}
-        </span>
-      </div>
-      {entry.lines.map((l, i) => (
-        <div key={i} className={clsx("whitespace-pre-wrap break-words", LINE_CLS[l.kind])}>
-          {l.text || " "}
+    <div className="mb-3">
+      {entry.session ? (
+        <UserTurn tool={entry.session} input={entry.input} prompt={<Prompt branch={entry.branch} session={entry.session} />} />
+      ) : (
+        <div className="flex flex-wrap gap-x-2">
+          <Prompt branch={entry.branch} session={null} />
+          <span>{highlighted}</span>
         </div>
+      )}
+      {entry.started && banner.length > 0 && <SessionBanner tool={entry.started} lines={banner} />}
+      {body.map((l, i) => (
+        <Reveal key={i} i={i} fresh={fresh}>
+          <RichLine line={l} tool={tool} first={l.kind === "agent" && body[i - 1]?.kind !== "agent"} />
+        </Reveal>
       ))}
+      {run && (
+        <Reveal i={body.length} fresh={fresh}>
+          <TaskList run={run} />
+        </Reveal>
+      )}
       {explain && (
         <motion.div
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-1.5 flex gap-2 rounded-lg border border-[var(--t-yellow)]/20 bg-[var(--t-yellow)]/[0.07] px-3 py-2 font-sans text-[13px] leading-snug text-[var(--t-yellow)]"
+          className="mt-1.5 flex gap-2 rounded-lg border border-[var(--t-yellow)]/20 bg-[var(--t-yellow)]/[0.07] px-3 py-2 font-sans text-[0.95em] leading-snug text-[var(--t-yellow)]"
         >
           <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span>

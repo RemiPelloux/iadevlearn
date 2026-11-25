@@ -161,8 +161,8 @@ function steps(l: L): Step[] {
       id: "starter",
       title: l("8. Starter kit for your project", "8. Kit de départ pour ton projet"),
       body: l(
-        "Run this at the root of one of your projects: shared rules for every agent, a first skill for Claude Code and Codex, and safe Codex defaults — exactly what the lessons teach. Edit the commands in AGENTS.md to match your project.",
-        "Lance ceci à la racine d'un de tes projets : des règles partagées pour tous les agents, un premier skill pour Claude Code et Codex, et des réglages Codex prudents — exactement ce qu'enseignent les leçons. Adapte les commandes d'AGENTS.md à ton projet.",
+        "Run this at the root of one of your projects: shared rules for every agent, a first skill for Claude Code and Codex, and safe Codex defaults. That's exactly what the lessons teach. Edit the commands in AGENTS.md to match your project.",
+        "Lance ceci à la racine d'un de tes projets : des règles partagées pour tous les agents, un premier skill pour Claude Code et Codex, et des réglages Codex prudents. C'est exactement ce qu'enseignent les leçons. Adapte les commandes d'AGENTS.md à ton projet.",
       ),
       blocks: {
         mac: [{ shell: "Terminal", code: STARTER }],
@@ -280,7 +280,7 @@ export function SetupGuide() {
           <span className="terminal inline-block rounded-lg bg-term">
             <CopyButton text={script} caption={l("Copy all", "Tout copier")} label={l("Copy every install command for this system", "Copier toutes les commandes d'installation pour ce système")} />
           </span>
-          <span className="ml-2 hidden text-xs text-fg-3 sm:inline">{l("all steps 1–7 at once", "les étapes 1 à 7 d'un coup")}</span>
+          <span className="ml-2 hidden text-xs text-fg-3 sm:inline">{l("steps 1 to 7 all at once", "les étapes 1 à 7 d'un coup")}</span>
         </span>
       </div>
 

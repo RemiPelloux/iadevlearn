@@ -257,7 +257,7 @@ export function sessionInput(ctx: Ctx, input: string, shell: (line: string) => s
         const content = project.initRules(pmMatch?.[1] ?? "npm");
         ctx.world.files = { ...ctx.world.files, [path]: content };
         ctx.out(`${tool === "codex" ? "•" : "●"} ${tool === "codex" ? "Added" : "Write"}(${path})`, "tool");
-        ctx.out(tx(`Created ${path}: commands, structure and conventions I found in the project. Review it — you know things I don't!`, `J'ai créé ${path} : les commandes, la structure et les conventions trouvées dans le projet. Relis-le — tu sais des choses que j'ignore !`), "agent");
+        ctx.out(tx(`Created ${path}: commands, structure and conventions I found in the project. Review it: you know things I don't!`, `J'ai créé ${path} : les commandes, la structure et les conventions trouvées dans le projet. Relis-le : tu sais des choses que j'ignore !`), "agent");
         ctx.emit({ type: "rules-write", path });
         ctx.emit({ type: "file-change", paths: [path] });
         return "/init";
@@ -282,7 +282,7 @@ export function sessionInput(ctx: Ctx, input: string, shell: (line: string) => s
         const skills = listSkills(view, tool);
         if (!skills.length) ctx.out(tx("No skills found.", "Aucun skill trouvé."), "muted");
         for (const s of skills) {
-          ctx.out(`  ${s.name} — ${s.description || "(no description)"}`, s.problems.length ? "warning" : "out");
+          ctx.out(`  ${s.name}: ${s.description || "(no description)"}`, s.problems.length ? "warning" : "out");
           for (const p of s.problems) ctx.out(`    ⚠ ${ctx.t(p.message)}`, "warning");
         }
         return "/skills";
@@ -294,9 +294,9 @@ export function sessionInput(ctx: Ctx, input: string, shell: (line: string) => s
         ctx.out(
           session.plan
             ? tool === "claude"
-              ? tx("⏸ plan mode on — I'll propose a plan and wait for your OK. (Real Claude Code: Shift+Tab)", "⏸ mode plan activé — je propose un plan et j'attends ton accord. (Vrai Claude Code : Maj+Tab)")
-              : tx("Planning mode — the agent writes a plan before acting.", "Mode Planning — l'agent écrit un plan avant d'agir.")
-            : tx("Plan mode off — I'll act directly.", "Mode plan désactivé — j'agis directement."),
+              ? tx("⏸ plan mode on: I'll propose a plan and wait for your OK. (Real Claude Code: Shift+Tab)", "⏸ mode plan activé : je propose un plan et j'attends ton accord. (Vrai Claude Code : Maj+Tab)")
+              : tx("Planning mode: the agent writes a plan before acting.", "Mode Planning : l'agent écrit un plan avant d'agir.")
+            : tx("Plan mode off: I'll act directly.", "Mode plan désactivé : j'agis directement."),
           "hint",
         );
         return "/plan";

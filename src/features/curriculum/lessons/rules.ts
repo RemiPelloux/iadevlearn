@@ -37,7 +37,7 @@ export const whatAreRules: LessonDef = {
       body: L("Ask for a fix and to run the tests. Watch which command the agent uses to test.", "Demande une correction et le lancement des tests. Regarde quelle commande l'agent utilise pour tester."),
       command: `claude -p "${P_TOTAL}"`,
       check: (w, s) => c.someRun(w, s, (r) => c.ranTests(r, "npm")),
-      success: L("It ran npm — but this project uses pnpm (see package.json). It even created a package-lock.json, a second lock file that will confuse your team. Nobody told it!", "Il a lancé npm — mais ce projet utilise pnpm (voir package.json). Il a même créé un package-lock.json, un second fichier de verrouillage qui va embrouiller ton équipe. Personne ne lui a dit !"),
+      success: L("It ran npm, but this project uses pnpm (see package.json). It even created a package-lock.json, a second lock file that will confuse your team. Nobody told it!", "Il a lancé npm, mais ce projet utilise pnpm (voir package.json). Il a même créé un package-lock.json, un second fichier de verrouillage qui va embrouiller ton équipe. Personne ne lui a dit !"),
     },
     {
       kind: "try",
@@ -53,7 +53,7 @@ export const whatAreRules: LessonDef = {
       body: L("/init asks the agent to study the project and write CLAUDE.md: commands, structure, conventions.", "/init demande à l'agent d'étudier le projet et d'écrire CLAUDE.md : commandes, structure, conventions."),
       command: "/init",
       check: (w) => c.fileExists(w, "CLAUDE.md"),
-      success: L("CLAUDE.md now exists — open it in the Files panel. The agent found pnpm in package.json and wrote it down. Always review this draft: you know things it doesn't.", "CLAUDE.md existe maintenant — ouvre-le dans le panneau Fichiers. L'agent a trouvé pnpm dans package.json et l'a noté. Relis toujours ce brouillon : tu sais des choses qu'il ignore."),
+      success: L("CLAUDE.md now exists. Open it in the Files panel. The agent found pnpm in package.json and wrote it down. Always review this draft: you know things it doesn't.", "CLAUDE.md existe maintenant. Ouvre-le dans le panneau Fichiers. L'agent a trouvé pnpm dans package.json et l'a noté. Relis toujours ce brouillon : tu sais des choses qu'il ignore."),
     },
     {
       kind: "try",
@@ -72,7 +72,7 @@ export const whatAreRules: LessonDef = {
     {
       kind: "challenge",
       title: L("Challenge: the agent follows your rules", "Défi : l'agent suit tes règles"),
-      body: L("Clean up the mess and prove the rules work: delete the stray package-lock.json, then send a short prompt — without mentioning tests or pnpm — and check the agent tests with pnpm on its own.", "Nettoie les dégâts et prouve que les règles marchent : supprime le package-lock.json en trop, puis envoie un prompt court — sans parler de tests ni de pnpm — et vérifie que l'agent teste avec pnpm tout seul."),
+      body: L("Clean up the mess and prove the rules work: delete the stray package-lock.json, then send a short prompt that doesn't mention tests or pnpm, and check the agent tests with pnpm on its own.", "Nettoie les dégâts et prouve que les règles marchent : supprime le package-lock.json en trop, puis envoie un prompt court, sans parler de tests ni de pnpm, et vérifie que l'agent teste avec pnpm tout seul."),
       objectives: [
         {
           id: "lock",
@@ -93,7 +93,7 @@ export const whatAreRules: LessonDef = {
       ],
       feedback: (w, s) => {
         const r = c.lastRunOf(w, s);
-        if (r && r.report.checks.verify && c.ranTests(r)) return L("That worked, but your prompt asked for tests. Try one that doesn't — let the rules do it.", "Ça marche, mais ton prompt demandait des tests. Essaie sans — laisse les règles s'en charger.");
+        if (r && r.report.checks.verify && c.ranTests(r)) return L("That worked, but your prompt asked for tests. Try one that doesn't and let the rules do it.", "Ça marche, mais ton prompt demandait des tests. Essaie sans et laisse les règles s'en charger.");
         return null;
       },
     },
@@ -174,13 +174,13 @@ export const oneRulebook: LessonDef = {
           id: "gemini",
           label: L("Gemini CLI runs pnpm test on its own", "Gemini CLI lance pnpm test tout seul"),
           check: (w, s) => c.someRun(w, s, (r) => r.tool === "gemini" && c.ranTests(r, "pnpm") && !r.report.checks.verify),
-          hints: [L("Gemini CLI reads GEMINI.md, which can import files too.", "Gemini CLI lit GEMINI.md, qui peut aussi importer des fichiers."), L('Create GEMINI.md with the line @AGENTS.md, then ask gemini -p "…".', 'Crée GEMINI.md avec la ligne @AGENTS.md, puis demande gemini -p "…".'), L(`Type: echo "@AGENTS.md" > GEMINI.md — then: gemini -p "${SHORT_TOTAL}"`, `Tape : echo "@AGENTS.md" > GEMINI.md — puis : gemini -p "${SHORT_TOTAL}"`)],
+          hints: [L("Gemini CLI reads GEMINI.md, which can import files too.", "Gemini CLI lit GEMINI.md, qui peut aussi importer des fichiers."), L('Create GEMINI.md with the line @AGENTS.md, then ask gemini -p "…".', 'Crée GEMINI.md avec la ligne @AGENTS.md, puis demande gemini -p "…".'), L(`Type: echo "@AGENTS.md" > GEMINI.md, then: gemini -p "${SHORT_TOTAL}"`, `Tape : echo "@AGENTS.md" > GEMINI.md, puis : gemini -p "${SHORT_TOTAL}"`)],
         },
         {
           id: "antigravity",
           label: L("Antigravity runs pnpm test on its own", "Antigravity lance pnpm test tout seul"),
           check: (w, s) => c.someRun(w, s, (r) => r.tool === "antigravity" && c.ranTests(r, "pnpm") && !r.report.checks.verify),
-          hints: [L("Antigravity reads AGENTS.md directly.", "Antigravity lit AGENTS.md directement."), L("Open antigravity and send the short request.", "Ouvre antigravity et envoie la demande courte."), L(`Type: antigravity — then: ${SHORT_TOTAL}`, `Tape : antigravity — puis : ${SHORT_TOTAL}`)],
+          hints: [L("Antigravity reads AGENTS.md directly.", "Antigravity lit AGENTS.md directement."), L("Open antigravity and send the short request.", "Ouvre antigravity et envoie la demande courte."), L(`Type: antigravity, then: ${SHORT_TOTAL}`, `Tape : antigravity, puis : ${SHORT_TOTAL}`)],
         },
       ],
     },

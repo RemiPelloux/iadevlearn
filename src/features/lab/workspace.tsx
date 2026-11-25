@@ -3,11 +3,11 @@
 import { clsx } from "clsx";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { BookOpen, Bot, Files, ListChecks, SquareTerminal } from "lucide-react";
+import { BookOpen, Bot, Files, ListChecks, SquareTerminal, X } from "lucide-react";
 import { useT } from "@/i18n";
 import { AgentView } from "./agent-view";
 import { Editor } from "./editor";
-import { FilesPanel } from "./files-panel";
+import { fileState, FilesPanel, KindIcon } from "./files-panel";
 import { RunPanel } from "./run-panel";
 import { useLab, type SidePanel } from "./store";
 import { Terminal } from "./terminal";
@@ -24,14 +24,15 @@ function useMedia(query: string, fallback: boolean) {
   );
 }
 
-function usePersistentNumber(key: string, initial: number) {
+function usePersistentNumber(key: string, initial: number | (() => number)) {
   const [v, setV] = useState(() => {
-    if (typeof window === "undefined") return initial;
+    const init = typeof initial === "function" ? initial : () => initial;
+    if (typeof window === "undefined") return init();
     try {
       const s = Number(localStorage.getItem(key));
-      return s > 0 ? s : initial;
+      return s > 0 ? s : init();
     } catch {
-      return initial;
+      return init();
     }
   });
   useEffect(() => {
@@ -59,6 +60,7 @@ export function Workspace({
   terminalMode,
   onTerminalModeChange,
   suggestion,
+  awaitInput,
   mobileHeader,
 }: {
   ui: WorkspaceUi;
@@ -66,6 +68,8 @@ export function Workspace({
   terminalMode: "assisted" | "real";
   onTerminalModeChange?: (m: "assisted" | "real") => void;
   suggestion?: string | null;
+  /** Highlight the input line: the step is waiting for a command. */
+  awaitInput?: boolean;
   mobileHeader?: ReactNode;
 }) {
   const t = useT();
@@ -76,9 +80,14 @@ export function Workspace({
   const eventKey = useLab((s) => s.eventKey);
   const openFile = useLab((s) => s.openFile);
   const setOpenFile = useLab((s) => s.setOpenFile);
+  const tabsOpen = useLab((s) => s.tabs);
+  const closeTab = useLab((s) => s.closeTab);
   const [sideTab, setSideTab] = useState<SideTab>(guide && !isDesktop ? "guide" : "files");
   const [mobileTab, setMobileTab] = useState<"guide" | "agent" | "terminal" | "files">(guide ? "guide" : "terminal");
-  const [termH, setTermH] = usePersistentNumber("iadl-term-h", 320);
+  // The terminal is where the work happens: it starts at about half the screen.
+  const [termH, setTermH] = usePersistentNumber("iadl-term-h2", () => (typeof window === "undefined" ? 420 : Math.round(Math.max(340, window.innerHeight * 0.48))));
+  const [termMax, setTermMax] = useState(false);
+  const maxTermH = () => (typeof window === "undefined" ? 900 : window.innerHeight - 160);
   const [sideW, setSideW] = usePersistentNumber("iadl-side-w", 360);
 
   // A request from the simulation (e.g. `edit CLAUDE.md`, clicking a run) brings the relevant panel forward.
@@ -104,9 +113,21 @@ export function Workspace({
   };
 
   const agentView = <AgentView world={world} events={events} eventKey={eventKey} orca={ui.orca} />;
-  const terminal = (compact?: boolean) => <Terminal mode={terminalMode} onModeChange={onTerminalModeChange} suggestion={suggestion} compact={compact} />;
+  const terminal = (compact?: boolean) => (
+    <Terminal
+      mode={terminalMode}
+      onModeChange={onTerminalModeChange}
+      suggestion={suggestion}
+      compact={compact}
+      awaitInput={awaitInput}
+      maximized={compact ? undefined : termMax}
+      onToggleMaximize={compact ? undefined : () => setTermMax((m) => !m)}
+    />
+  );
+  const editing = ui.editor && openFile && openFile in world.files ? openFile : null;
+  // Desktop and tablet open files as tabs in the main area, like an IDE; phones open them full screen in the Files tab.
   const filesOrEditor =
-    ui.editor && openFile && openFile in world.files ? <Editor key={openFile} path={openFile} onBack={() => setOpenFile(null)} /> : <FilesPanel onOpen={(p) => (ui.editor ? setOpenFile(p) : setOpenFile(null))} />;
+    !isTablet && editing ? <Editor key={editing} path={editing} onBack={() => setOpenFile(null)} /> : <FilesPanel onOpen={(p) => (ui.editor ? setOpenFile(p) : setOpenFile(null))} />;
 
   const tabs: Array<{ id: SideTab; label: string; icon: ReactNode; show: boolean }> = [
     { id: "guide", label: t("lab.workspace.guide"), icon: <BookOpen className="size-3.5" />, show: !!guide && !isDesktop },
@@ -142,11 +163,21 @@ export function Workspace({
     </div>
   );
 
+  const fileTabs = tabsOpen.filter((p) => p in world.files);
   const center = (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="relative min-h-0 flex-1 overflow-hidden">{agentView}</div>
-      <ResizeHandle orientation="horizontal" onDrag={(d) => setTermH((h) => Math.min(680, Math.max(160, h + d)))} />
-      <div style={{ height: termH }} className="shrink-0">
+      {!termMax && (
+        <>
+          {ui.editor && fileTabs.length > 0 && <EditorTabs tabs={fileTabs} active={editing} onSelect={setOpenFile} onClose={closeTab} />}
+          <div className="relative min-h-0 flex-1 overflow-hidden">{editing ? <Editor key={editing} path={editing} /> : agentView}</div>
+          <ResizeHandle
+            orientation="horizontal"
+            onDrag={(d) => setTermH((h) => Math.min(maxTermH(), Math.max(180, h + d)))}
+            onDoubleClick={() => setTermMax(true)}
+          />
+        </>
+      )}
+      <div style={termMax ? undefined : { height: termH }} className={termMax ? "min-h-0 flex-1" : "shrink-0"}>
         {terminal()}
       </div>
     </div>
@@ -213,7 +244,64 @@ export function Workspace({
   );
 }
 
-function ResizeHandle({ orientation, onDrag }: { orientation: "horizontal" | "vertical"; onDrag: (delta: number) => void }) {
+/** IDE-style tabs: the agent view is always first, open files follow. */
+function EditorTabs({ tabs, active, onSelect, onClose }: { tabs: string[]; active: string | null; onSelect: (p: string | null) => void; onClose: (p: string) => void }) {
+  const world = useLab((s) => s.world);
+  const t = useT();
+  const base = (p: string) => p.split("/").pop() ?? p;
+  const tabCls = (on: boolean) =>
+    clsx(
+      "group relative flex h-full shrink-0 items-center gap-1.5 border-r border-line pr-1.5 pl-3 text-[12.5px] transition-colors",
+      on ? "bg-[var(--editor-bg)] text-fg" : "text-fg-3 hover:bg-surface-2/60 hover:text-fg-2",
+    );
+  return (
+    <div className="scrollbar-thin flex h-9 shrink-0 items-stretch overflow-x-auto border-b border-line bg-[var(--editor-tabbar)]" role="tablist" aria-label={t("lab.workspace.panels")}>
+      <button role="tab" aria-selected={!active} onClick={() => onSelect(null)} className={clsx(tabCls(!active), "pr-3")}>
+        <Bot className="size-3.5 text-accent-fg" aria-hidden />
+        {t("lab.workspace.agent")}
+        {!active && <span className="absolute inset-x-0 top-0 h-0.5 bg-accent" />}
+      </button>
+      {tabs.map((p) => {
+        const on = active === p;
+        const dup = tabs.filter((q) => base(q) === base(p)).length > 1;
+        const st = fileState(world, p);
+        return (
+          <div
+            key={p}
+            role="tab"
+            aria-selected={on}
+            tabIndex={0}
+            title={p}
+            onClick={() => onSelect(p)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") onSelect(p);
+              if (e.key === "Delete") onClose(p);
+            }}
+            onAuxClick={(e) => e.button === 1 && onClose(p)}
+            className={tabCls(on)}
+          >
+            <KindIcon path={p} className="size-3.5" />
+            <span className={clsx("font-mono", st === "modified" && "text-warn", st === "new" && "text-ok")}>{base(p)}</span>
+            {dup && <span className="font-mono text-[11px] text-fg-3">{p.split("/").slice(-2, -1)[0] ?? ""}</span>}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose(p);
+              }}
+              aria-label={`Close ${p}`}
+              className={clsx("ml-0.5 grid size-5 place-items-center rounded hover:bg-surface-2 hover:text-fg pointer-coarse:size-8", on ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100")}
+            >
+              <X className="size-3.5" />
+            </button>
+            {on && <span className="absolute inset-x-0 top-0 h-0.5 bg-accent" />}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ResizeHandle({ orientation, onDrag, onDoubleClick }: { orientation: "horizontal" | "vertical"; onDrag: (delta: number) => void; onDoubleClick?: () => void }) {
   const last = useRef<number | null>(null);
   const horizontal = orientation === "horizontal";
   const t = useT();
@@ -238,9 +326,10 @@ function ResizeHandle({ orientation, onDrag }: { orientation: "horizontal" | "ve
         last.current = pos;
       }}
       onPointerUp={() => (last.current = null)}
+      onDoubleClick={onDoubleClick}
       className={clsx(
         "group relative z-[3] shrink-0 bg-line transition-colors hover:bg-accent focus-visible:bg-accent",
-        horizontal ? "h-px cursor-row-resize" : "w-px cursor-col-resize",
+        horizontal ? "h-1 cursor-row-resize bg-line/70" : "w-px cursor-col-resize",
       )}
     >
       <span className={clsx("absolute", horizontal ? "inset-x-0 -top-1.5 -bottom-1.5" : "inset-y-0 -left-1.5 -right-1.5")} />

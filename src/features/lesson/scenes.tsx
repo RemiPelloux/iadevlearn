@@ -24,7 +24,7 @@ export function Scene({ id }: { id: SceneId }) {
           intro={l("The same agent, the same project. Only the prompt changes.", "Le même agent, le même projet. Seul le prompt change.")}
           actions={[
             { label: 'claude -p "add a discount"', command: 'claude -p "add a discount"', caption: l("Vague: the agent searched everything, created a JavaScript file and guessed the rules. Yellow lines = guesses.", "Flou : l'agent a tout fouillé, créé un fichier JavaScript et deviné les règles. Lignes jaunes = suppositions.") },
-            { label: l("Send the precise prompt", "Envoyer le prompt précis"), command: `claude -p "${P_DISCOUNT}"`, caption: l("Precise: right file, right rule, tests added and run. Same agent — better instructions.", "Précis : bon fichier, bonne règle, tests ajoutés et lancés. Même agent — meilleures instructions.") },
+            { label: l("Send the precise prompt", "Envoyer le prompt précis"), command: `claude -p "${P_DISCOUNT}"`, caption: l("Precise: right file, right rule, tests added and run. Same agent, better instructions.", "Précis : bon fichier, bonne règle, tests ajoutés et lancés. Même agent, meilleures instructions.") },
           ]}
         />
       );
@@ -160,7 +160,7 @@ function SceneButtons({ done, label, onNext, onReplay }: { done: boolean; label?
   return (
     <div className="flex flex-wrap items-center gap-2">
       {!done ? (
-        <Button onClick={onNext} size="md">
+        <Button onClick={onNext} size="md" data-nudge={true}>
           {label}
         </Button>
       ) : (
@@ -179,7 +179,7 @@ function AgentLoopScene() {
   const l = useL();
   const [phase, setPhase] = useState(-1);
   const phases = [
-    { name: l("Read", "Lire"), line: "● Read(src/cart.ts)", note: l("It opens the files it needs — like you would.", "Il ouvre les fichiers dont il a besoin — comme tu le ferais.") },
+    { name: l("Read", "Lire"), line: "● Read(src/cart.ts)", note: l("It opens the files it needs, like you would.", "Il ouvre les fichiers dont il a besoin, comme tu le ferais.") },
     { name: l("Plan", "Planifier"), line: "● total() ignores quantity → multiply, add a test", note: l("It decides what to change and how to check it.", "Il décide quoi changer et comment le vérifier.") },
     { name: l("Act", "Agir"), line: "● Update(src/cart.ts)  ⎿ +1 −1", note: l("It edits files and runs commands. A chatbot can't do this part.", "Il modifie des fichiers et lance des commandes. Un chatbot ne peut pas faire ça.") },
     { name: l("Verify", "Vérifier"), line: "● Bash(pnpm test)  ⎿ ✓ 3 tests passed", note: l("It checks its own work. If a test fails, it loops back to Plan.", "Il vérifie son propre travail. Si un test échoue, il repart à Planifier.") },
@@ -338,7 +338,7 @@ function ContextDeskScene() {
       </div>
       <p className="min-h-10 text-sm text-fg-2" aria-live="polite">
         {full
-          ? l("Overflow! Real agents would now summarize older messages (/compact) — and lose details. Remove the noise instead.", "Débordement ! Les vrais agents résumeraient maintenant les anciens messages (/compact) — et perdraient des détails. Retire plutôt le bruit.")
+          ? l("Overflow! Real agents would now summarize older messages (/compact) and lose details. Remove the noise instead.", "Débordement ! Les vrais agents résumeraient maintenant les anciens messages (/compact) et perdraient des détails. Retire plutôt le bruit.")
           : on.includes("all")
             ? l("Loading the whole folder “just in case” fills the desk fast. One precise @file is usually enough.", "Charger tout le dossier « au cas où » remplit vite le bureau. Un @fichier précis suffit généralement.")
             : l("Add things to the desk. Everything the agent knows must fit here.", "Ajoute des choses sur le bureau. Tout ce que l'agent sait doit tenir ici.")}
@@ -576,7 +576,7 @@ function ProgressiveDisclosureScene() {
         {!req
           ? l("Four skills installed. The agent only holds their names and descriptions: tiny. Pick a request.", "Quatre skills installés. L'agent ne garde que leurs noms et descriptions : minuscule. Choisis une demande.")
           : match
-            ? l(`The request matches “${match.name}”: its full instructions are loaded now — and only these.`, `La demande correspond à « ${match.name} » : ses instructions complètes sont chargées maintenant — et seulement elles.`)
+            ? l(`The request matches “${match.name}”: its full instructions are loaded now, and only these.`, `La demande correspond à « ${match.name} » : ses instructions complètes sont chargées maintenant, et seulement elles.`)
             : l("No skill matches: none is loaded. Zero cost.", "Aucun skill ne correspond : aucun n'est chargé. Coût zéro.")}
       </p>
     </div>

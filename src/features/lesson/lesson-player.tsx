@@ -154,7 +154,13 @@ function LessonRuntime({ lesson }: { lesson: Lesson }) {
           {lesson.title}
         </p>
       </div>
-      <nav className="mx-auto hidden items-center gap-1 md:flex" aria-label={t("lesson.stepsNav")}>
+      <p className="mx-auto hidden shrink-0 items-center gap-2 text-xs text-fg-2 md:flex lg:hidden" aria-live="polite">
+        <span className="font-semibold text-accent-fg">{stepLabel(t, lesson.steps[step].kind)}</span>
+        <span className="tabular-nums text-fg-3">
+          {step + 1}/{lesson.steps.length}
+        </span>
+      </p>
+      <nav className="mx-auto hidden items-center gap-1 lg:flex" aria-label={t("lesson.stepsNav")}>
         {lesson.steps.map((s, i) => (
           <button
             key={i}
@@ -174,8 +180,8 @@ function LessonRuntime({ lesson }: { lesson: Lesson }) {
           </button>
         ))}
       </nav>
-      <div className="ml-auto flex items-center gap-2 md:ml-0">
-        <span className="hidden items-center gap-1 rounded-full bg-warn-soft px-2 py-0.5 text-xs font-semibold text-warn sm:flex">
+      <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-0">
+        <span className="hidden items-center gap-1 rounded-full bg-warn-soft px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-warn sm:flex">
           <Zap className="size-3.5" /> {lesson.xp} XP
         </span>
         <Button variant="ghost" size="sm" onClick={restart} title={t("lesson.restartTitle")}>
@@ -203,7 +209,7 @@ function LessonRuntime({ lesson }: { lesson: Lesson }) {
               className="h-full"
             >
               {current.kind === "discover" && (
-                <FocusCard eyebrow={stepLabel(t, "discover")} title={current.title} onNext={() => goto(step + 1)} onBack={step > 0 ? () => goto(step - 1) : undefined}>
+                <FocusCard title={current.title} onNext={() => goto(step + 1)} onBack={step > 0 ? () => goto(step - 1) : undefined}>
                   <div className="space-y-3 text-[15px] leading-relaxed text-fg-2">
                     {current.body.map((p) => (
                       <p key={p}>{p}</p>
@@ -221,6 +227,7 @@ function LessonRuntime({ lesson }: { lesson: Lesson }) {
                   terminalMode={settings.terminalMode}
                   onTerminalModeChange={(m) => updateSettings({ terminalMode: m })}
                   suggestion={settings.terminalMode === "assisted" ? suggestion : null}
+                  awaitInput={settings.terminalMode === "real" && !!suggestion}
                   guide={
                     <GuidePanel
                       lesson={lesson}
@@ -246,28 +253,27 @@ function LessonRuntime({ lesson }: { lesson: Lesson }) {
 }
 
 function FocusCard({
-  eyebrow,
   title,
   children,
   onNext,
   onBack,
   nextLabel,
   nextDisabled,
+  nextNudge,
 }: {
-  eyebrow: string;
   title: string;
   children: React.ReactNode;
   onNext: () => void;
   onBack?: () => void;
   nextLabel?: string;
   nextDisabled?: boolean;
+  nextNudge?: boolean;
 }) {
   const t = useT();
   return (
     <div className="scrollbar-thin h-full overflow-y-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl">
-        <p className="text-xs font-semibold text-accent-fg ">{eyebrow}</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{title}</h1>
         <div className="mt-5">{children}</div>
         <div className="mt-8 flex items-center justify-between gap-3">
           {onBack ? (
@@ -277,7 +283,7 @@ function FocusCard({
           ) : (
             <span />
           )}
-          <Button size="lg" onClick={onNext} disabled={nextDisabled}>
+          <Button size="lg" data-nudge={!!nextNudge} onClick={onNext} disabled={nextDisabled}>
             {nextLabel ?? t("common.continue")} <ArrowRight className="size-4" />
           </Button>
         </div>
@@ -299,7 +305,7 @@ function WatchView({ step, onNext, onBack }: { step: WatchStep; onNext: () => vo
   const [i, setI] = useState(0);
   const frame = i > 0 ? step.frames[i - 1] : null;
   return (
-    <FocusCard eyebrow={stepLabel(t, "watch")} title={step.title} onNext={onNext} onBack={onBack} nextLabel={i < step.frames.length ? t("lesson.skipAhead") : t("lesson.yourTurn")}>
+    <FocusCard title={step.title} onNext={onNext} onBack={onBack} nextLabel={i < step.frames.length ? t("lesson.skipAhead") : t("lesson.yourTurn")} nextNudge={i === step.frames.length}>
       <p className="text-[15px] text-fg-2">{step.body}</p>
       <div className="mt-5 overflow-hidden rounded-lg border border-line">
         <div className="h-64 bg-surface-2/40">
@@ -331,7 +337,7 @@ function WatchView({ step, onNext, onBack }: { step: WatchStep; onNext: () => vo
         <Button variant="secondary" size="sm" onClick={() => setI((x) => Math.max(0, x - 1))} disabled={i === 0} aria-label={t("lesson.previousCommand")}>
           <ChevronLeft className="size-4" /> {t("lesson.rewind")}
         </Button>
-        <Button size="sm" onClick={() => setI((x) => Math.min(step.frames.length, x + 1))} disabled={i === step.frames.length}>
+        <Button size="sm" data-nudge={i < step.frames.length} onClick={() => setI((x) => Math.min(step.frames.length, x + 1))} disabled={i === step.frames.length}>
           <Play className="size-3.5 fill-current" /> {t("lesson.nextCommand")}
         </Button>
         <span className="ml-auto text-xs text-fg-3">
@@ -378,7 +384,6 @@ function GuidePanel({
 
   return (
     <div className="flex min-h-full flex-col p-5">
-      <p className="text-xs font-semibold text-accent-fg ">{stepLabel(t, current.kind)}</p>
       {current.kind === "try" && (
         <TryView
           step={current}
@@ -397,7 +402,7 @@ function GuidePanel({
       )}
       {current.kind === "experiment" && (
         <>
-          <h2 className="mt-2 text-xl font-semibold tracking-tight">{current.title}</h2>
+          <h2 className="text-xl font-semibold tracking-tight">{current.title}</h2>
           <p className="mt-2 text-sm leading-relaxed text-fg-2">{current.body}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {current.ideas.map((idea) => (
@@ -446,7 +451,7 @@ function TryView({
   const t = useT();
   return (
     <>
-      <h2 className="mt-2 text-xl font-semibold tracking-tight">{step.title}</h2>
+      <h2 className="text-xl font-semibold tracking-tight">{step.title}</h2>
       <p className="mt-2 text-sm leading-relaxed text-fg-2">{step.body}</p>
       {step.command && (
         <div className="mt-4 rounded-lg border border-line bg-surface-2/60 p-3">
@@ -454,7 +459,7 @@ function TryView({
             <>
               <code className="block font-mono text-sm break-all text-fg">{step.command}</code>
               {!done && (
-                <Button size="sm" variant="secondary" className="mt-3" onClick={onRun}>
+                <Button size="sm" variant="secondary" className="mt-3" data-nudge={true} onClick={onRun}>
                   <Play className="size-3 fill-current" /> {t("lesson.runForMe")}
                 </Button>
               )}
@@ -468,7 +473,7 @@ function TryView({
         </div>
       )}
       {step.action && !done && (
-        <Button className="mt-4 self-start" onClick={onAction}>
+        <Button className="mt-4 self-start" data-nudge={true} onClick={onAction}>
           {step.action.label}
         </Button>
       )}
@@ -492,7 +497,7 @@ function TryView({
         )}
       </AnimatePresence>
       <div className="mt-auto pt-6">
-        <Button size="lg" variant={done ? "primary" : "secondary"} className="w-full disabled:opacity-100 disabled:text-fg-3 disabled:shadow-none" disabled={!done} onClick={onNext}>
+        <Button size="lg" data-nudge={done} variant={done ? "primary" : "secondary"} className="w-full disabled:opacity-100 disabled:text-fg-3 disabled:shadow-none" disabled={!done} onClick={onNext}>
           {done ? (
             <>
               {t("common.continue")} <ArrowRight className="size-4" />
@@ -533,7 +538,7 @@ function ChallengeView({
   const hintNames = t.list("lesson.hintNames");
   return (
     <>
-      <h2 className="mt-2 flex items-center gap-2 text-xl font-semibold tracking-tight">
+      <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
         {boss ? <Swords className="size-5 text-warn" /> : <Target className="size-5 text-accent-fg" />}
         {step.title}
       </h2>
@@ -595,7 +600,7 @@ function ChallengeView({
         </div>
       )}
       <div className="mt-auto pt-6">
-        <Button size="lg" variant={allDone ? "ok" : "secondary"} className="w-full disabled:opacity-100 disabled:text-fg-3 disabled:shadow-none" disabled={!allDone} onClick={onNext}>
+        <Button size="lg" data-nudge={allDone} variant={allDone ? "ok" : "secondary"} className="w-full disabled:opacity-100 disabled:text-fg-3 disabled:shadow-none" disabled={!allDone} onClick={onNext}>
           {allDone ? (
             <>
               {t("lesson.complete")} <ChevronRight className="size-4" />

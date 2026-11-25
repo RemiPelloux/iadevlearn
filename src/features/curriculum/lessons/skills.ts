@@ -17,7 +17,7 @@ export const whatIsSkill: LessonDef = {
   setup: () => shop({ ".claude/skills/changelog/SKILL.md": CHANGELOG_SKILL }),
   recap: [
     L("A skill is a folder with a SKILL.md: a name, a description saying when to use it, and step-by-step instructions.", "Un skill est un dossier avec un SKILL.md : un nom, une description qui dit quand l'utiliser, et des instructions étape par étape."),
-    L("The agent only sees each skill's name and description. It loads the full instructions when your request matches — so 50 skills cost almost nothing.", "L'agent ne voit que le nom et la description de chaque skill. Il charge les instructions complètes quand ta demande correspond — 50 skills ne coûtent donc presque rien."),
+    L("The agent only sees each skill's name and description. It loads the full instructions when your request matches, so 50 skills cost almost nothing.", "L'agent ne voit que le nom et la description de chaque skill. Il charge les instructions complètes quand ta demande correspond, donc 50 skills ne coûtent presque rien."),
     L("Rules = what's always true. Skills = how to do a specific job, on demand.", "Règles = ce qui est toujours vrai. Skills = comment faire un travail précis, à la demande."),
   ],
   steps: [
@@ -93,7 +93,7 @@ export const writeSkill: LessonDef = {
     {
       kind: "try",
       title: L("Create the skill file", "Crée le fichier du skill"),
-      body: L("You'll write a docs skill that teaches agents how your team documents projects. Start with a skeleton (button) — or create .claude/skills/docs/SKILL.md yourself.", "Tu vas écrire un skill docs qui apprend aux agents comment ton équipe documente ses projets. Commence par un squelette (bouton) — ou crée toi-même .claude/skills/docs/SKILL.md."),
+      body: L("You'll write a docs skill that teaches agents how your team documents projects. Start with a skeleton (button), or create .claude/skills/docs/SKILL.md yourself.", "Tu vas écrire un skill docs qui apprend aux agents comment ton équipe documente ses projets. Commence par un squelette (bouton), ou crée toi-même .claude/skills/docs/SKILL.md."),
       action: { label: L("Create .claude/skills/docs/SKILL.md", "Créer .claude/skills/docs/SKILL.md"), kind: "create-file", path: ".claude/skills/docs/SKILL.md", content: SKILL_SKELETON },
       check: (w) => Object.keys(w.files).some((p) => /^\.claude\/skills\/[^/]+\/SKILL\.md$/.test(p)),
       success: L("The file exists, but the skill is broken: run /skills in a session or look at the guide to see why.", "Le fichier existe, mais le skill est cassé : lance /skills dans une session ou regarde le guide pour savoir pourquoi."),
@@ -101,7 +101,7 @@ export const writeSkill: LessonDef = {
     {
       kind: "challenge",
       title: L("Boss: a skill every agent can use", "Boss : un skill utilisable par tous les agents"),
-      body: L("Finish the skill so that a short request like “Update the README” makes Claude Code add a “Getting started” section to the README — then make Codex use the very same skill.", "Termine le skill pour qu'une demande courte comme « Update the README » fasse ajouter une section « Getting started » au README par Claude Code — puis fais utiliser exactement le même skill par Codex."),
+      body: L("Finish the skill so that a short request like “Update the README” makes Claude Code add a “Getting started” section to the README. Then make Codex use the very same skill.", "Termine le skill pour qu'une demande courte comme « Update the README » fasse ajouter une section « Getting started » au README par Claude Code. Ensuite, fais utiliser exactement le même skill par Codex."),
       objectives: [
         {
           id: "valid",
@@ -130,7 +130,7 @@ export const writeSkill: LessonDef = {
           hints: [
             L("Codex looks for skills in .agents/skills/, not .claude/skills/.", "Codex cherche les skills dans .agents/skills/, pas dans .claude/skills/."),
             L("Copy SKILL.md into .agents/skills/<name>/ with cp, then ask Codex.", "Copie SKILL.md dans .agents/skills/<nom>/ avec cp, puis demande à Codex."),
-            L('Type: cp .claude/skills/docs/SKILL.md .agents/skills/docs/SKILL.md — then: codex exec "Update the README"', 'Tape : cp .claude/skills/docs/SKILL.md .agents/skills/docs/SKILL.md — puis : codex exec "Update the README"'),
+            L('Type: cp .claude/skills/docs/SKILL.md .agents/skills/docs/SKILL.md, then: codex exec "Update the README"', 'Tape : cp .claude/skills/docs/SKILL.md .agents/skills/docs/SKILL.md, puis : codex exec "Update the README"'),
           ],
         },
       ],

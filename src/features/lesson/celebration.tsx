@@ -182,7 +182,7 @@ export function Celebration({
 
         <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
           {next ? (
-            <LinkButton href={`/learn/${next.id}`} size="lg">
+            <LinkButton href={`/learn/${next.id}`} size="lg" data-nudge={true}>
               {t("celebrate.next", { title: next.title })} <ArrowRight className="size-4" />
             </LinkButton>
           ) : (

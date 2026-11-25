@@ -1,14 +1,12 @@
 "use client";
 
 import { clsx } from "clsx";
-import Link from "next/link";
-import { useState } from "react";
-import { Accessibility, Flame, Keyboard, Languages, Palette, RotateCcw, SquareTerminal, Star, Target, Trophy } from "lucide-react";
+import { Accessibility, Flame, Keyboard, Languages, Palette, SquareTerminal, Star, Target, Trophy } from "lucide-react";
 import { Avatar, AVATAR_HEX } from "@/components/ui/avatar";
-import { Button, Kbd } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/button";
 import { Card, DynamicIcon, ProgressBar, useHydrated } from "@/components/ui/misc";
-import { PLAYGROUND_KEY, removeKey } from "@/features/lab/persistence";
 import { LOCALES, useT, type Locale, type MessageKey } from "@/i18n";
+import { DataSection, ProfilesSection } from "./profile-data";
 import { useProgress, type Settings } from "./store";
 import { ACHIEVEMENTS, AVATAR_COLORS, DAILY_GOALS, dayKey, levelFor, type DailyGoal } from "./rules";
 
@@ -44,7 +42,6 @@ function ProfileInner() {
   const t = useT();
   const p = useProgress();
   const lv = levelFor(p.xp);
-  const [confirm, setConfirm] = useState(false);
   const titles = t.list("levels");
   const starCount = Object.values(p.completed).reduce((n, c) => n + (c.stars ?? 1), 0);
   const stats: Array<[React.ReactNode, string, string]> = [
@@ -86,8 +83,15 @@ function ProfileInner() {
             </div>
           </div>
         </div>
-        <p className="mt-5 rounded-lg bg-surface-2 px-3 py-2 text-xs text-fg-3">{t("profile.guestNote")}</p>
+        <p className="mt-5 rounded-lg bg-surface-2 px-3 py-2 text-xs text-fg-3">
+          {t("profile.guestNote")}{" "}
+          <a href="#data" className="text-accent-fg underline underline-offset-2">
+            {t.locale === "fr" ? "Voir tes données" : "See your data"}
+          </a>
+        </p>
       </Card>
+
+      <ProfilesSection />
 
       <section aria-labelledby="stats">
         <h2 id="stats" className="mb-3 text-lg font-semibold">
@@ -215,38 +219,9 @@ function ProfileInner() {
             ))}
           </dl>
         </Card>
-        <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">{t("profile.reset")}</p>
-            <p className="text-xs text-fg-2">{t("profile.resetDesc")}</p>
-            <Link href="/welcome" className="mt-1 inline-block text-xs text-accent-fg underline underline-offset-2">
-              {t("profile.replayWelcome")}
-            </Link>
-          </div>
-          {confirm ? (
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setConfirm(false)}>
-                {t("common.cancel")}
-              </Button>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => {
-                  p.resetProgress();
-                  removeKey(PLAYGROUND_KEY);
-                  setConfirm(false);
-                }}
-              >
-                {t("profile.resetConfirm")}
-              </Button>
-            </div>
-          ) : (
-            <Button variant="secondary" size="sm" onClick={() => setConfirm(true)}>
-              <RotateCcw className="size-3.5" /> {t("profile.resetButton")}
-            </Button>
-          )}
-        </Card>
       </section>
+
+      <DataSection />
     </div>
   );
 }

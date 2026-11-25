@@ -56,7 +56,7 @@ export const codexSandbox: LessonDef = {
       body: L("Flags win over the config file, for this run only.", "Les options l'emportent sur le fichier de config, pour cette exécution seulement."),
       command: `codex exec --sandbox workspace-write "${P_TOTAL}"`,
       check: (w, s) => c.someRun(w, s, (r) => r.tool === "codex" && r.outcome === "done"),
-      success: L("It worked — and because approval is still “untrusted”, Codex asked before running pnpm test (auto-approved here).", "Ça a marché — et comme l'approbation est toujours « untrusted », Codex a demandé avant de lancer pnpm test (approuvé automatiquement ici)."),
+      success: L("It worked. Because approval is still “untrusted”, Codex asked before running pnpm test (auto-approved here).", "Ça a marché. Comme l'approbation est toujours « untrusted », Codex a demandé avant de lancer pnpm test (approuvé automatiquement ici)."),
     },
     {
       kind: "challenge",
@@ -122,7 +122,7 @@ export const antigravityWorkflows: LessonDef = {
       body: L("Start Antigravity. Notice it already loaded AGENTS.md.", "Lance Antigravity. Remarque qu'il a déjà chargé AGENTS.md."),
       command: "antigravity",
       check: (w) => c.inSession(w, "antigravity"),
-      success: L("“Rules loaded: AGENTS.md” — the same file Codex reads.", "« Règles chargées : AGENTS.md » — le même fichier que lit Codex."),
+      success: L("“Rules loaded: AGENTS.md”: the same file Codex reads.", "« Règles chargées : AGENTS.md » : le même fichier que lit Codex."),
     },
     {
       kind: "try",
@@ -143,19 +143,19 @@ export const antigravityWorkflows: LessonDef = {
     {
       kind: "challenge",
       title: L("Challenge: a team rule", "Défi : une règle d'équipe"),
-      body: L("Your team writes code comments in French. Add that as an Antigravity rule in .agents/rules/, then get Antigravity to add the discount — with French comments, without asking for them in the prompt.", "Ton équipe écrit ses commentaires en français. Ajoute-le comme règle Antigravity dans .agents/rules/, puis fais ajouter la remise par Antigravity — avec des commentaires en français, sans le demander dans le prompt."),
+      body: L("Your team writes code comments in French. Add that as an Antigravity rule in .agents/rules/, then get Antigravity to add the discount with French comments, without asking for them in the prompt.", "Ton équipe écrit ses commentaires en français. Ajoute-le comme règle Antigravity dans .agents/rules/, puis fais ajouter la remise par Antigravity, avec des commentaires en français, sans le demander dans le prompt."),
       objectives: [
         {
           id: "rule",
           label: L("A rule file in .agents/rules/ asks for French comments", "Un fichier dans .agents/rules/ demande des commentaires en français"),
           check: (w) => Object.entries(w.files).some(([p, t]) => /^\.agents\/rules\/[^/]+\.md$/.test(p) && /\b(french|fran[çc]ais)\b/i.test(t)),
-          hints: [L("Rule files are plain Markdown, directly inside .agents/rules/.", "Les fichiers de règles sont du Markdown simple, directement dans .agents/rules/."), L("Create .agents/rules/style.md with one line about French comments.", "Crée .agents/rules/style.md avec une ligne sur les commentaires en français."), L('Type: /exit — then: echo "Write code comments in French." > .agents/rules/style.md', 'Tape : /exit puis echo "Write code comments in French." > .agents/rules/style.md')],
+          hints: [L("Rule files are plain Markdown, directly inside .agents/rules/.", "Les fichiers de règles sont du Markdown simple, directement dans .agents/rules/."), L("Create .agents/rules/style.md with one line about French comments.", "Crée .agents/rules/style.md avec une ligne sur les commentaires en français."), L('Type: /exit, then: echo "Write code comments in French." > .agents/rules/style.md', 'Tape : /exit puis echo "Write code comments in French." > .agents/rules/style.md')],
         },
         {
           id: "applied",
           label: L("Antigravity adds the discount with French comments", "Antigravity ajoute la remise avec des commentaires en français"),
           check: (w, s) => c.someRun(w, s, (r) => r.tool === "antigravity" && r.task === "discount" && r.outcome === "done" && r.followed.includes("lang:fr")),
-          hints: [L("New rules load when a session starts: reopen Antigravity.", "Les nouvelles règles se chargent au démarrage d'une session : rouvre Antigravity."), L("Send a precise discount prompt that doesn't mention French.", "Envoie un prompt de remise précis qui ne parle pas de français."), L(`Type: antigravity — then: ${P_DISCOUNT}`, `Tape : antigravity — puis : ${P_DISCOUNT}`)],
+          hints: [L("New rules load when a session starts: reopen Antigravity.", "Les nouvelles règles se chargent au démarrage d'une session : rouvre Antigravity."), L("Send a precise discount prompt that doesn't mention French.", "Envoie un prompt de remise précis qui ne parle pas de français."), L(`Type: antigravity, then: ${P_DISCOUNT}`, `Tape : antigravity, puis : ${P_DISCOUNT}`)],
         },
       ],
     },
@@ -187,7 +187,7 @@ export const parallelWorktrees: LessonDef = {
       kind: "discover",
       title: L("Why not just open two terminals?", "Pourquoi pas juste deux terminaux ?"),
       body: [
-        L("Two agents in the same folder edit the same files at the same time — chaos. Git worktrees give each agent its own copy of the project, on its own branch.", "Deux agents dans le même dossier modifient les mêmes fichiers en même temps — le chaos. Les worktrees Git donnent à chaque agent sa propre copie du projet, sur sa propre branche."),
+        L("Two agents in the same folder edit the same files at the same time. Chaos. Git worktrees give each agent its own copy of the project, on its own branch.", "Deux agents dans le même dossier modifient les mêmes fichiers en même temps : c'est le chaos. Les worktrees Git donnent à chaque agent sa propre copie du projet, sur sa propre branche."),
         L("Orca is an app built around this idea: one worktree per task, an agent in each, all visible at once. Add agents below.", "Orca est une appli construite autour de cette idée : un worktree par tâche, un agent dans chacun, tous visibles d'un coup. Ajoute des agents ci-dessous."),
       ],
       scene: "worktrees",
@@ -271,7 +271,7 @@ export const agentTeam: LessonDef = {
           hints: [
             L("orca worktree create takes --agent and --prompt.", "orca worktree create accepte --agent et --prompt."),
             L("One worktree with --agent claude, another with --agent codex, each with a precise prompt.", "Un worktree avec --agent claude, un autre avec --agent codex, chacun avec un prompt précis."),
-            L(`Type: orca worktree create --name euro --agent claude --prompt "${P_EURO}" — then: ${FIX_CMD}`, `Tape : orca worktree create --name euro --agent claude --prompt "${P_EURO}" — puis : ${FIX_CMD}`),
+            L(`Type: orca worktree create --name euro --agent claude --prompt "${P_EURO}", then: ${FIX_CMD}`, `Tape : orca worktree create --name euro --agent claude --prompt "${P_EURO}", puis : ${FIX_CMD}`),
           ],
         },
         {
@@ -284,7 +284,7 @@ export const agentTeam: LessonDef = {
           id: "merged",
           label: L("Both are merged into main", "Les deux sont fusionnés dans main"),
           check: (w) => w.worktrees.filter((wt) => wt.agent && wt.merged).length >= 2,
-          hints: [L("Merge each worktree's branch.", "Fusionne la branche de chaque worktree."), L("git merge <branch>, once per worktree. If it conflicts, the two tasks touched the same file.", "git merge <branche>, une fois par worktree. En cas de conflit, les deux tâches ont touché le même fichier."), L("Type: git merge euro — then: git merge fix-total", "Tape : git merge euro — puis : git merge fix-total")],
+          hints: [L("Merge each worktree's branch.", "Fusionne la branche de chaque worktree."), L("git merge <branch>, once per worktree. If it conflicts, the two tasks touched the same file.", "git merge <branche>, une fois par worktree. En cas de conflit, les deux tâches ont touché le même fichier."), L("Type: git merge euro, then: git merge fix-total", "Tape : git merge euro, puis : git merge fix-total")],
         },
       ],
       feedback: (w) => {

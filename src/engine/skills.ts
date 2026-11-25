@@ -61,7 +61,7 @@ export function checkSkill(folder: string, text: string): SkillProblem[] {
   const desc = fm.data.description ?? "";
   if (!desc) p.push({ id: "no-description", message: tx("Missing `description:`. It is the only thing the agent reads before deciding to use the skill.", "Il manque `description:`. C'est la seule chose que l'agent lit avant de choisir le skill.") });
   else if (!/\b(use when|use it when|use for|when|whenever|utilise[- ]le quand|quand|lorsque|pour)\b/i.test(desc))
-    p.push({ id: "no-trigger", message: tx("The description should say *when* to use the skill (“Use when…”).", "La description doit dire *quand* utiliser le skill (« Utilise-le quand… »).") });
+    p.push({ id: "no-trigger", message: tx("The description should say when to use the skill (“Use when…”).", "La description doit dire quand utiliser le skill (« Use when… »).") });
   if (!/^\s*(\d+\.|[-*])\s+\S/m.test(fm.body)) p.push({ id: "no-steps", message: tx("Add steps (a numbered or bulleted list) so the agent knows what to do.", "Ajoute des étapes (liste numérotée ou à puces) pour que l'agent sache quoi faire.") });
   return p;
 }

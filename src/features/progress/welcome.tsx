@@ -85,7 +85,11 @@ function WelcomeFlow() {
 
       <main className="mx-auto grid w-full max-w-5xl flex-1 items-center gap-10 px-4 pb-16 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-fg-3">{t("welcome.stepOf", { n: Math.min(step + 1, 4), total: 4 })}</p>
+          <div className="flex max-w-48 gap-1.5" role="progressbar" aria-valuemin={1} aria-valuemax={4} aria-valuenow={Math.min(step + 1, 4)} aria-label={t("welcome.stepOf", { n: Math.min(step + 1, 4), total: 4 })}>
+            {[0, 1, 2, 3].map((i) => (
+              <span key={i} className={clsx("h-1.5 flex-1 rounded-full transition-colors", i <= step ? "bg-accent" : "bg-surface-2")} />
+            ))}
+          </div>
           <AnimatePresence mode="wait" custom={dir}>
             <motion.section
               key={id}
@@ -322,7 +326,7 @@ function NameInput({ value, onChange, onEnter, label, placeholder }: { value: st
 function Nav({ onBack, onNext, nextLabel, t }: { onBack?: () => void; onNext: () => void; nextLabel?: string; t: ReturnType<typeof useT> }) {
   return (
     <div className="mt-8 flex items-center gap-3">
-      <Button size="lg" onClick={onNext}>
+      <Button size="lg" onClick={onNext} data-nudge={true}>
         {nextLabel ?? t("welcome.next")} <ArrowRight className="size-4" />
       </Button>
       {onBack && (

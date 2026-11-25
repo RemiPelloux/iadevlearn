@@ -142,7 +142,7 @@ const discount: Task = {
   },
   plan: [
     tx("Read src/cart.ts and tests/cart.test.ts", "Lire src/cart.ts et tests/cart.test.ts"),
-    tx("Add applyDiscount(totalCents, percent) next to total(), clamped to 0–100 %", "Ajouter applyDiscount(totalCents, percent) à côté de total(), borné entre 0 et 100 %"),
+    tx("Add applyDiscount(totalCents, percent) next to total(), clamped between 0 and 100 %", "Ajouter applyDiscount(totalCents, percent) à côté de total(), borné entre 0 et 100 %"),
     tx("Add a test for 20 % off and for a percent above 100", "Ajouter un test pour 20 % et pour un pourcentage au-dessus de 100"),
     tx("Run the tests", "Lancer les tests"),
   ],
@@ -153,7 +153,7 @@ const discount: Task = {
     } else if (without(ctx, "specific")) {
       out["src/cart.ts"] = out["src/cart.ts"].replace(/\n*$/, "\n\n") + "export function applyDiscount(total: number): number {\n  return total * 0.9;\n}\n";
     } else {
-      const doc = fr(ctx) ? "/** Applique une remise en pourcentage (0–100) à un total en centimes. */" : "/** Applies a percentage discount (0–100) to a total in cents. */";
+      const doc = fr(ctx) ? "/** Applique une remise en pourcentage (de 0 à 100) à un total en centimes. */" : "/** Applies a percentage discount (0 to 100) to a total in cents. */";
       out["src/cart.ts"] =
         out["src/cart.ts"].replace(/\n*$/, "\n\n") +
         `${doc}\nexport function applyDiscount(totalCents: number, percent: number): number {\n  const p = Math.min(Math.max(percent, 0), 100);\n  return Math.round(totalCents * (1 - p / 100));\n}\n`;
@@ -167,7 +167,7 @@ const discount: Task = {
       );
     return ctx.missing.length
       ? { files: out, summary: tx("Added a discount, but I had to guess a few things (see “Assumed” below).", "J'ai ajouté une remise, mais j'ai dû deviner certaines choses (voir « Supposé » plus bas).") }
-      : { files: out, summary: tx("Added applyDiscount() to src/cart.ts, clamped to 0–100 %, with two tests.", "J'ai ajouté applyDiscount() dans src/cart.ts, bornée entre 0 et 100 %, avec deux tests.") };
+      : { files: out, summary: tx("Added applyDiscount() to src/cart.ts, clamped between 0 and 100 %, with two tests.", "J'ai ajouté applyDiscount() dans src/cart.ts, bornée entre 0 et 100 %, avec deux tests.") };
   },
 };
 
@@ -285,8 +285,8 @@ export const SHOP: Project = {
   // Order matters: the most specific requests first.
   tasks: [changelog, readme, writeTests, discount, euro, fixTotal],
   summary: tx(
-    "This is Tiny Shop, a small TypeScript project. src/cart.ts holds the cart (addItem, total), src/price.ts formats prices, and tests/ has Vitest tests. package.json says it uses pnpm. Heads-up: total() ignores item quantities — that looks like a bug.",
-    "C'est Tiny Shop, un petit projet TypeScript. src/cart.ts contient le panier (addItem, total), src/price.ts formate les prix et tests/ contient des tests Vitest. package.json indique pnpm. Attention : total() ignore les quantités — ça ressemble à un bug.",
+    "This is Tiny Shop, a small TypeScript project. src/cart.ts holds the cart (addItem, total), src/price.ts formats prices, and tests/ has Vitest tests. package.json says it uses pnpm. Heads-up: total() ignores item quantities, which looks like a bug.",
+    "C'est Tiny Shop, un petit projet TypeScript. src/cart.ts contient le panier (addItem, total), src/price.ts formate les prix et tests/ contient des tests Vitest. package.json indique pnpm. Attention : total() ignore les quantités, ce qui ressemble à un bug.",
   ),
   initRules: (pm) => `# Tiny Shop
 

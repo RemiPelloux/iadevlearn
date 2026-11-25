@@ -12,7 +12,7 @@ export const whatIsAgent: LessonDef = {
   id: "what-is-an-agent",
   chapterId: "foundations",
   title: L("What is a coding agent?", "C'est quoi, un agent de code ?"),
-  tagline: L("An AI that reads, acts and checks — in your terminal", "Une IA qui lit, agit et vérifie — dans ton terminal"),
+  tagline: L("An AI that reads, acts and checks, right in your terminal", "Une IA qui lit, agit et vérifie, directement dans ton terminal"),
   xp: 50,
   concepts: [L("coding agent", "agent de code"), L("agent loop", "boucle de l'agent"), L("session", "session")],
   commands: ["claude", "/exit"],
@@ -61,7 +61,7 @@ export const whatIsAgent: LessonDef = {
     {
       kind: "experiment",
       title: L("Meet the other agents", "Rencontre les autres agents"),
-      body: L("Every tool works the same way: start it by name, talk, /exit. Try them — and /help inside each one shows its own commands.", "Chaque outil marche pareil : on le lance par son nom, on parle, /exit. Essaie-les — et /help dans chacun affiche ses propres commandes."),
+      body: L("Every tool works the same way: start it by name, talk, /exit. Try them. Inside each one, /help shows its own commands.", "Chaque outil marche pareil : on le lance par son nom, on parle, /exit. Essaie-les. Dans chacun, /help affiche ses propres commandes."),
       ideas: ["codex", "/help", "/exit", "gemini", "claude --help"],
     },
     { kind: "celebrate" },
@@ -79,7 +79,7 @@ export const firstPrompt: LessonDef = {
   ui: UI_RUN,
   setup: () => shop(),
   recap: [
-    L("An agent never says “I don't know”: when your prompt is vague, it guesses — and shows you what it assumed.", "Un agent ne dit jamais « je ne sais pas » : quand ton prompt est flou, il devine — et te montre ce qu'il a supposé."),
+    L("An agent never says “I don't know”: when your prompt is vague, it guesses, then shows you what it assumed.", "Un agent ne dit jamais « je ne sais pas » : quand ton prompt est flou, il devine, puis te montre ce qu'il a supposé."),
     L("A good prompt says what to do, where (@file), within which limits, how to check it, with details, and when it's done.", "Un bon prompt dit quoi faire, où (@fichier), dans quelles limites, comment vérifier, avec des détails, et quand c'est fini."),
     L("Asking the agent to add and run tests is the cheapest way to catch its mistakes.", "Demander à l'agent d'ajouter et de lancer des tests est le moyen le plus simple d'attraper ses erreurs."),
   ],
@@ -88,7 +88,7 @@ export const firstPrompt: LessonDef = {
       kind: "discover",
       title: L("Same task, two prompts", "Même tâche, deux prompts"),
       body: [
-        L("Imagine asking a new colleague to “add a discount”. Which file? How much? What about tests? They'd ask — an agent mostly guesses.", "Imagine demander à un nouveau collègue « ajoute une remise ». Quel fichier ? Combien ? Et les tests ? Lui demanderait — un agent, lui, devine surtout."),
+        L("Imagine asking a new colleague to “add a discount”. Which file? How much? What about tests? They'd ask. An agent mostly guesses.", "Imagine demander à un nouveau collègue « ajoute une remise ». Quel fichier ? Combien ? Et les tests ? Lui demanderait. Un agent, lui, devine surtout."),
         L("Send both prompts below to the same agent and compare what happens.", "Envoie les deux prompts ci-dessous au même agent et compare ce qui se passe."),
       ],
       scene: "vague-vs-precise",
@@ -108,7 +108,7 @@ export const firstPrompt: LessonDef = {
       body: L("Let's see the problem for real. This starts Claude Code with a first request. Read the yellow “Assumed” lines in the output: they're the agent's guesses.", "Voyons le problème en vrai. Cette commande lance Claude Code avec une première demande. Lis les lignes jaunes « Supposé » : ce sont les suppositions de l'agent."),
       command: 'claude "add a discount"',
       check: (w, s) => c.someRun(w, s, (r) => r.task === "discount" && r.outcome === "partial"),
-      success: L("It created src/discount.js — a JavaScript file in a TypeScript project — with a hard-coded 10% and no test. Not wrong, just guessed. Open the Run tab to see everything it assumed.", "Il a créé src/discount.js — un fichier JavaScript dans un projet TypeScript — avec 10 % en dur et aucun test. Pas faux, juste deviné. Ouvre l'onglet Exécution pour voir tout ce qu'il a supposé."),
+      success: L("It created src/discount.js (a JavaScript file in a TypeScript project) with a hard-coded 10% and no test. Not wrong, just guessed. Open the Run tab to see everything it assumed.", "Il a créé src/discount.js (un fichier JavaScript dans un projet TypeScript) avec 10 % en dur et aucun test. Pas faux, juste deviné. Ouvre l'onglet Exécution pour voir tout ce qu'il a supposé."),
     },
     {
       kind: "challenge",
@@ -182,7 +182,7 @@ export const contextWindow: LessonDef = {
       title: L("The agent's desk", "Le bureau de l'agent"),
       body: [
         L("Picture the agent's context window as a desk. Everything it uses to answer must fit on it: its instructions, your rules, the files it opened, your conversation.", "Imagine la fenêtre de contexte comme un bureau. Tout ce que l'agent utilise pour répondre doit y tenir : ses instructions, tes règles, les fichiers ouverts, votre conversation."),
-        L("Add things to the desk below. When it's full, older things get summarized (that's /compact) — and details get lost.", "Ajoute des choses sur le bureau ci-dessous. Quand il est plein, les plus anciennes sont résumées (c'est /compact) — et des détails se perdent."),
+        L("Add things to the desk below. When it's full, older things get summarized (that's /compact), and details get lost.", "Ajoute des choses sur le bureau ci-dessous. Quand il est plein, les plus anciennes sont résumées (c'est /compact), et des détails se perdent."),
       ],
       scene: "context-window",
     },
@@ -192,7 +192,7 @@ export const contextWindow: LessonDef = {
       body: L("claude -p answers once and exits (“headless” mode, handy for scripts). Ask it to fix the bug without saying where it is. Watch the context panel: the agent has to search.", "claude -p répond une fois puis s'arrête (mode « headless », pratique pour les scripts). Demande-lui de corriger le bug sans dire où il est. Regarde le panneau de contexte : l'agent doit chercher."),
       command: 'claude -p "Fix the total bug"',
       check: (w, s) => c.someRun(w, s, (r) => r.task === "fix-total" && r.context.some((i) => i.label.endsWith("(search)"))),
-      success: L("It searched and read every code file to find the bug. It worked here, but in a real project with thousands of files that's slow, costly — and it may fix the wrong thing.", "Il a cherché et lu tous les fichiers de code pour trouver le bug. Ça a marché ici, mais dans un vrai projet de milliers de fichiers, c'est lent, coûteux — et il peut corriger la mauvaise chose."),
+      success: L("It searched and read every code file to find the bug. It worked here, but in a real project with thousands of files that's slow and costly, and it may fix the wrong thing.", "Il a cherché et lu tous les fichiers de code pour trouver le bug. Ça a marché ici, mais dans un vrai projet de milliers de fichiers, c'est lent et coûteux, et il peut corriger la mauvaise chose."),
     },
     {
       kind: "try",
@@ -211,7 +211,7 @@ export const contextWindow: LessonDef = {
     {
       kind: "challenge",
       title: L("Challenge: lean and right", "Défi : léger et juste"),
-      body: L("Get any agent to switch prices to euros (“12,50 €”) in src/price.ts — reading only that file, keeping the function name formatPrice.", "Fais passer les prix en euros (« 12,50 € ») dans src/price.ts par n'importe quel agent — en ne lisant que ce fichier, et en gardant le nom formatPrice."),
+      body: L("Get any agent to switch prices to euros (“12,50 €”) in src/price.ts. It should read only that file and keep the function name formatPrice.", "Fais passer les prix en euros (« 12,50 € ») dans src/price.ts par n'importe quel agent. Il ne doit lire que ce fichier et garder le nom formatPrice."),
       objectives: [
         {
           id: "lean",
@@ -277,7 +277,7 @@ export const planVerify: LessonDef = {
     {
       kind: "try",
       title: L("Ask for a change", "Demande un changement"),
-      body: L("Ask for the euro formatting. The agent will answer with a plan — and change nothing yet.", "Demande le format en euros. L'agent répondra par un plan — sans rien changer pour l'instant."),
+      body: L("Ask for the euro formatting. The agent will answer with a plan and change nothing yet.", "Demande le format en euros. L'agent répondra par un plan, sans rien changer pour l'instant."),
       command: P_EURO,
       check: (w, s) => c.someRun(w, s, (r) => r.outcome === "plan"),
       success: L("A numbered plan, and the files are untouched. This is your moment to say “no, use a comma” or “also update the README”.", "Un plan numéroté, et les fichiers sont intacts. C'est le moment de dire « non, mets une virgule » ou « mets aussi le README à jour »."),
@@ -299,7 +299,7 @@ export const planVerify: LessonDef = {
           id: "plan",
           label: L("Get a plan for the total() fix", "Obtiens un plan pour corriger total()"),
           check: (w, s) => c.someRun(w, s, (r) => r.task === "fix-total" && r.outcome === "plan"),
-          hints: [L("Plan mode must be on when you send the request.", "Le mode plan doit être activé quand tu envoies la demande."), L("You're still in plan mode — just describe the fix.", "Tu es toujours en mode plan — décris simplement la correction."), L(`Type: ${P_TOTAL}`, `Tape : ${P_TOTAL}`)],
+          hints: [L("Plan mode must be on when you send the request.", "Le mode plan doit être activé quand tu envoies la demande."), L("You're still in plan mode, so just describe the fix.", "Tu es toujours en mode plan : décris simplement la correction."), L(`Type: ${P_TOTAL}`, `Tape : ${P_TOTAL}`)],
         },
         {
           id: "fixed",
@@ -311,7 +311,7 @@ export const planVerify: LessonDef = {
           id: "tested",
           label: L("A test for quantities was added and run", "Un test sur les quantités a été ajouté et lancé"),
           check: (w, s) => c.fileHas(w, "tests/cart.test.ts", /multiplies by quantity/) && c.someRun(w, s, (r) => r.task === "fix-total" && c.ranTests(r)),
-          hints: [L("The agent only tests when asked.", "L'agent ne teste que si on le lui demande."), L("Ask for a test in the request, then approve.", "Demande un test dans ta requête, puis valide."), L(`Type: ${P_TOTAL} — then: yes`, `Tape : ${P_TOTAL} — puis : oui`)],
+          hints: [L("The agent only tests when asked.", "L'agent ne teste que si on le lui demande."), L("Ask for a test in the request, then approve.", "Demande un test dans ta requête, puis valide."), L(`Type: ${P_TOTAL}, then: yes`, `Tape : ${P_TOTAL}, puis : oui`)],
         },
       ],
       feedback: (w) => (w.session?.pending ? L("A plan is waiting for you. Type yes to approve, or tell the agent what to change.", "Un plan t'attend. Tape oui pour valider, ou dis à l'agent quoi changer.") : !w.session ? L("You left the session. Type claude --permission-mode plan to come back.", "Tu as quitté la session. Tape claude --permission-mode plan pour revenir.") : null),

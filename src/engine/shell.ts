@@ -194,7 +194,7 @@ const SHELL: Record<string, Handler> = {
   help: (ctx) => {
     ctx.out(
       [
-        ctx.t(tx("IA Dev Learn terminal — everything runs in a safe sandbox.", "Terminal IA Dev Learn — tout tourne dans un bac à sable sans risque.")),
+        ctx.t(tx("IA Dev Learn terminal: everything runs in a safe sandbox.", "Terminal IA Dev Learn : tout tourne dans un bac à sable sans risque.")),
         "",
         "Agents:  claude · codex · gemini · antigravity   (claude -p \"…\", codex exec \"…\")",
         "Orca:    orca worktree create|list|ps|show|set|rm · orca terminal list|send|read",
@@ -286,7 +286,7 @@ function runOne(ctx: Ctx, cmd: ParsedCommand): string | null {
   fail(
     [`bash: ${name}: command not found`],
     guess
-      ? tx(`Did you mean ${guess}? (Watch out for typos — the terminal is picky!)`, `Tu voulais dire ${guess} ? (Attention aux fautes de frappe — le terminal est pointilleux !)`)
+      ? tx(`Did you mean ${guess}? (Watch out for typos, the terminal is picky!)`, `Tu voulais dire ${guess} ? (Attention aux fautes de frappe, le terminal est pointilleux !)`)
       : tx("Type help to see what works in this sandbox. To talk to an agent, start one first: claude", "Tape help pour voir ce qui marche ici. Pour parler à un agent, lance-le d'abord : claude"),
   );
 }

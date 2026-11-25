@@ -29,7 +29,7 @@ export const CHAPTER_DEFS: ChapterDef[] = [
     number: 3,
     title: L("Rules: teach your agent once", "Les règles : apprends une fois à ton agent"),
     tier: "intermediate",
-    description: L("CLAUDE.md, AGENTS.md, GEMINI.md — and how to write rules that work.", "CLAUDE.md, AGENTS.md, GEMINI.md — et comment écrire des règles qui marchent."),
+    description: L("CLAUDE.md, AGENTS.md, GEMINI.md, and how to write rules that work.", "CLAUDE.md, AGENTS.md, GEMINI.md, et comment écrire des règles qui marchent."),
     lessons: [whatAreRules, oneRulebook, goodRules],
     upcoming: [L("Rules for one folder only", "Des règles pour un seul dossier"), L("Cursor rules (.mdc) and globs", "Les règles Cursor (.mdc) et les globs")],
   },

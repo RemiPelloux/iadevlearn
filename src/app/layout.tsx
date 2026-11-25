@@ -7,12 +7,12 @@ const plexSans = IBM_Plex_Sans({ variable: "--font-plex-sans", subsets: ["latin"
 const plexMono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"], weight: ["400", "500", "600"] });
 
 export const metadata: Metadata = {
-  title: { default: "IA Dev Learn — Learn to code with AI agents", template: "%s · IA Dev Learn" },
+  title: { default: "IA Dev Learn: learn to code with AI agents", template: "%s · IA Dev Learn" },
   description:
     "Learn Claude Code, Codex, Gemini CLI, Antigravity and Orca by doing it: prompts, rules, skills and parallel agents in a safe simulated terminal. In English and French.",
   openGraph: {
-    title: "IA Dev Learn — Learn to code with AI agents",
-    description: "Prompt agents, write rules and skills, and run a team of agents with Orca — in a simulated terminal. Free, no account needed.",
+    title: "IA Dev Learn: learn to code with AI agents",
+    description: "Prompt agents, write rules and skills, and run a team of agents with Orca, in a simulated terminal. Free, no account needed.",
     type: "website",
   },
 };

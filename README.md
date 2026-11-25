@@ -23,7 +23,21 @@ npm run e2e        # Playwright: desktop + phone journeys (run `npx next build` 
 | 6 | Orca: a team of agents | Parallel agents with worktrees · **Boss:** Conduct a team of agents |
 | 7–8 | MCP, hooks & subagents · Safety & trust | coming soon |
 
-Every lesson follows Discover → Watch → Try → Experiment → Challenge → Celebrate, with XP, stars, badges, daily quests and three-level hints.
+Every lesson follows Discover → Watch → Try → Experiment → Challenge → Celebrate, with XP, stars, badges, daily quests and three-level hints. The control to press next pulses gently (a steady outline with reduced motion).
+
+## Docs
+
+`/docs` has three sections, in English and French:
+
+- **Using IA Dev Learn:** start here, how a lesson works, the terminal, reading the Agent view, files and the editor, the Playground, profiles and data, settings and accessibility.
+- **Guides:** coding agents, prompting, context windows, plan and verify, rules files, skills, Codex sandbox, Antigravity, Orca, MCP, safety. Each links to the lesson that practises it.
+- **Cheat sheets:** every command per tool, where every file lives, a prompt checklist with templates. Printable.
+
+Pages are written in a small Markdown subset (`src/features/guide/markdown.tsx`); `[[Run]]` draws a control name the way it looks in the app. `src/features/guide/__tests__/docs.test.ts` checks links, both languages, and punctuation.
+
+## Profiles and your data
+
+Everything lives in the browser's localStorage; there is no account. The profile page lets several learners share one browser (each with their own progress and Playground), download a JSON backup, restore it as a new profile on another machine, see every stored key with its size, and reset or erase. See `src/features/progress/profiles.ts`.
 
 ## Install the real tools (copy-paste)
 
@@ -66,6 +80,7 @@ src/
     lab/             Workspace: Agent view (context window, loop, prompt meter, Orca lanes), terminal, files, editor, Run panel
     lesson/          Lesson player and interactive Discover scenes
     setup/           Install guide (/setup) with per-OS copy-paste commands
+    guide/           Docs (/docs): content in EN/FR, Markdown renderer, sidebar search, cheat sheets
     progress/        XP, levels, badges, quests, streaks, autosave (localStorage)
     docs/            Reference (/commands) with live before/after examples; also drives the assisted terminal
   i18n/              useT() dictionaries (en.ts, fr.ts) + useL() for inline bilingual text
@@ -77,4 +92,4 @@ The simulator is deterministic: the same prompt always gives the same result, so
 
 `.github/workflows/ci.yml` runs typecheck, lint, unit tests, build and Playwright on every push. Every push to `main` runs `.github/workflows/pages.yml`: unit tests, then a static export (`STATIC_EXPORT=1 BASE_PATH=/<repo>`) deployed to GitHub Pages.
 
-Everything is saved in `localStorage` (`iadevlearn-progress`, `iadevlearn-playground`); there is no backend.
+Everything is saved in `localStorage` (`iadevlearn-progress`, `iadevlearn-playground`, `iadevlearn-profiles`, and one `iadevlearn-profile:<id>` per parked profile); there is no backend.

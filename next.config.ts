@@ -11,6 +11,7 @@ const basePath = process.env.BASE_PATH || undefined;
 const nextConfig: NextConfig = {
   ...(staticExport ? { output: "export" as const, trailingSlash: true, images: { unoptimized: true } } : {}),
   basePath,
+  env: { NEXT_PUBLIC_BASE_PATH: basePath ?? "" },
   turbopack: {
     rules: {
       "*.css": {

@@ -5,7 +5,8 @@ import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { BookText, Check, Download, Flame, FlaskConical, Languages, Map as MapIcon, Moon, Sun, UserRound } from "lucide-react";
+import { BookOpen, BookText, Check, Download, Flame, FlaskConical, HardDrive, Languages, Map as MapIcon, Moon, Sun, UserRound, UserRoundPlus } from "lucide-react";
+import { readIndex, switchProfile, type ProfileIndex } from "@/features/progress/profiles";
 import { useProgress } from "@/features/progress/store";
 import { dayKey, levelFor, streak } from "@/features/progress/rules";
 import { LOCALES, useT, type Locale } from "@/i18n";
@@ -13,11 +14,12 @@ import { Avatar } from "@/components/ui/avatar";
 import { Logo, Ring, useHydrated } from "@/components/ui/misc";
 
 const LINKS = [
-  { href: "/learn", key: "nav.learn", icon: MapIcon },
-  { href: "/playground", key: "nav.playground", icon: FlaskConical },
-  { href: "/commands", key: "nav.commands", icon: BookText },
-  { href: "/setup", key: "nav.setup", icon: Download },
-  { href: "/profile", key: "nav.profile", icon: UserRound },
+  { href: "/learn", key: "nav.learn", icon: MapIcon, mobile: true, desktop: true },
+  { href: "/playground", key: "nav.playground", icon: FlaskConical, mobile: true, desktop: true },
+  { href: "/commands", key: "nav.commands", icon: BookText, mobile: true, desktop: true },
+  { href: "/docs", key: "nav.docs", icon: BookOpen, mobile: true, desktop: true },
+  { href: "/setup", key: "nav.setup", icon: Download, mobile: false, desktop: true },
+  { href: "/profile", key: "nav.profile", icon: UserRound, mobile: true, desktop: false },
 ] as const;
 
 export function AppNav() {
@@ -42,8 +44,8 @@ export function AppNav() {
           <Link href="/" aria-label={t("nav.home")}>
             <Logo />
           </Link>
-          <nav className="ml-4 hidden items-center gap-1 md:flex" aria-label={t("nav.main")}>
-            {LINKS.map((l) => {
+          <nav className="ml-4 hidden items-center gap-1 lg:flex" aria-label={t("nav.main")}>
+            {LINKS.filter((l) => l.desktop).map((l) => {
               const active = pathname.startsWith(l.href);
               return (
                 <Link
@@ -84,17 +86,13 @@ export function AppNav() {
             >
               {hydrated && settings.theme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}
             </button>
-            {hydrated && onboarded && (
-              <Link href="/profile" className="hidden rounded-full ring-offset-2 ring-offset-bg hover:ring-2 hover:ring-line-strong md:block" aria-label={t("nav.profile")}>
-                <Avatar name={name} color={avatar} size="sm" />
-              </Link>
-            )}
+            {hydrated && onboarded && <ProfileMenu name={name} avatar={avatar} />}
           </div>
         </div>
       </header>
       {/* mobile bottom navigation */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden" aria-label={t("nav.main")}>
-        {LINKS.map((l) => {
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label={t("nav.main")}>
+        {LINKS.filter((l) => l.mobile).map((l) => {
           const active = pathname.startsWith(l.href);
           return (
             <Link
@@ -208,5 +206,91 @@ function LanguageMenu({ value, onChange }: { value: Locale; onChange: (l: Locale
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/** The avatar opens a small menu: the profiles on this browser, and shortcuts to your profile and data. */
+function ProfileMenu({ name, avatar }: { name: string; avatar: Parameters<typeof Avatar>[0]["color"] }) {
+  const t = useT();
+  const fr = t.locale === "fr";
+  const [open, setOpen] = useState(false);
+  const [index, setIndex] = useState<ProfileIndex | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [open]);
+  const others = index?.profiles.filter((p) => p.id !== index.active) ?? [];
+  return (
+    <div ref={ref} className="relative hidden lg:block">
+      <button
+        onClick={() => {
+          setIndex(readIndex());
+          setOpen((o) => !o);
+        }}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={fr ? "Menu du profil" : "Profile menu"}
+        className="rounded-full ring-offset-2 ring-offset-bg hover:ring-2 hover:ring-line-strong"
+      >
+        <Avatar name={name} color={avatar} size="sm" />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, transition: { duration: 0.1 } }}
+            role="menu"
+            className="absolute right-0 mt-1.5 w-64 overflow-hidden rounded-xl border border-line bg-elevated p-1 shadow-[var(--shadow-lg)]"
+          >
+            <div className="flex items-center gap-2.5 px-2.5 py-2">
+              <Avatar name={name} color={avatar} size="sm" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{name || t("common.guest")}</p>
+                <p className="text-[11px] text-fg-3">{fr ? "Profil actif" : "Active profile"}</p>
+              </div>
+            </div>
+            <MenuLink href="/profile" icon={<UserRound className="size-4" />} onPick={() => setOpen(false)}>
+              {fr ? "Profil et réglages" : "Profile and settings"}
+            </MenuLink>
+            <MenuLink href="/profile#data" icon={<HardDrive className="size-4" />} onPick={() => setOpen(false)}>
+              {fr ? "Tes données et sauvegardes" : "Your data and backups"}
+            </MenuLink>
+            {others.length > 0 && (
+              <>
+                <p className="mt-1 border-t border-line px-2.5 pt-2 pb-1 text-[11px] font-semibold text-fg-3">{fr ? "Changer de profil" : "Switch profile"}</p>
+                {others.map((p) => (
+                  <button key={p.id} role="menuitem" onClick={() => switchProfile(p.id)} className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm hover:bg-surface-2">
+                    <Avatar name={p.name} color={p.avatar as never} size="sm" />
+                    <span className="truncate">{p.name || t("common.guest")}</span>
+                  </button>
+                ))}
+              </>
+            )}
+            <MenuLink href="/profile#profiles" icon={<UserRoundPlus className="size-4" />} onPick={() => setOpen(false)}>
+              {fr ? "Ajouter un profil" : "Add a profile"}
+            </MenuLink>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function MenuLink({ href, icon, children, onPick }: { href: string; icon: React.ReactNode; children: React.ReactNode; onPick: () => void }) {
+  return (
+    <Link href={href} role="menuitem" onClick={onPick} className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-fg-2 hover:bg-surface-2 hover:text-fg">
+      {icon}
+      {children}
+    </Link>
   );
 }

@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Award, Star, Target, Zap } from "lucide-react";
+import { ArrowRight, Award, BookOpen, BookText, Download, Star, Target, Zap } from "lucide-react";
+import { DynamicIcon } from "@/components/ui/misc";
+import { ACHIEVEMENTS } from "@/features/progress/rules";
+import type { MessageKey } from "@/i18n";
 import { AppNav } from "@/components/app-nav";
 import { LinkButton } from "@/components/ui/button";
 import { localizedChapters, tierLabel } from "@/features/curriculum/localize";
@@ -38,8 +41,7 @@ export function Landing() {
       <main className="pb-24 md:pb-0">
         <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-14 pb-16 lg:grid-cols-2 lg:pt-20">
           <div>
-            <p className="font-mono text-sm text-fg-3">{t("landing.prompt")}</p>
-            <h1 className="mt-4 text-[2.5rem] leading-[1.08] font-semibold tracking-tight text-balance sm:text-[3.4rem]">
+            <h1 className="text-[2.5rem] leading-[1.08] font-semibold tracking-tight text-balance sm:text-[3.4rem]">
               {t("landing.title1")} <span className="text-accent-fg">{t("landing.titleAccent")}</span>
               {t.locale === "fr" ? "" : " "}
               {t("landing.title2")}
@@ -116,20 +118,57 @@ export function Landing() {
         </section>
 
         <section className="border-y border-line bg-surface">
-          <div className="mx-auto max-w-6xl px-4 py-14">
-            <h2 className="text-2xl font-semibold tracking-tight">{t("landing.gameTitle")}</h2>
-            <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 lg:grid-cols-[1fr_1.4fr]">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight">{t("landing.gameTitle")}</h2>
+              <ul className="mt-6 flex flex-wrap gap-2" aria-label={t("learn.badges")}>
+                {ACHIEVEMENTS.slice(1, 9).map((a) => (
+                  <li key={a.id} className="flex items-center gap-1.5 rounded-full border border-line bg-elevated py-1 pr-3 pl-1 text-xs font-medium shadow-[var(--shadow-card)]">
+                    <span className="grid size-6 place-items-center rounded-full bg-warn-soft text-warn">
+                      <DynamicIcon name={a.icon} className="size-3.5" />
+                    </span>
+                    {t(`badges.${a.id}.title` as MessageKey)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <dl className="divide-y divide-line border-y border-line">
               {GAME.map(([id, Icon, color]) => (
-                <li key={id} className="rounded-xl border border-line bg-elevated p-5 shadow-[var(--shadow-card)]">
-                  <span className="grid size-11 place-items-center rounded-xl text-white shadow-[inset_0_-3px_0_rgba(0,0,0,0.2)]" style={{ background: color }}>
-                    <Icon className="size-5" />
-                  </span>
-                  <h3 className="mt-4 font-semibold">{t(`landing.game.${id}.title`)}</h3>
-                  <p className="mt-1 text-sm text-fg-2">{t(`landing.game.${id}.body`)}</p>
-                </li>
+                <div key={id} className="grid grid-cols-[2rem_1fr] gap-x-3 py-4 sm:grid-cols-[2rem_9rem_1fr]">
+                  <Icon className="mt-0.5 size-5" style={{ color }} aria-hidden />
+                  <dt className="font-semibold">{t(`landing.game.${id}.title`)}</dt>
+                  <dd className="col-start-2 text-sm text-fg-2 sm:col-start-3">{t(`landing.game.${id}.body`)}</dd>
+                </div>
               ))}
-            </ul>
+            </dl>
           </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-4 py-14" aria-labelledby="beyond">
+          <h2 id="beyond" className="text-2xl font-semibold tracking-tight">
+            {t.locale === "fr" ? "Apprends ici, puis passe aux vrais outils" : "Learn it here, then use the real tools"}
+          </h2>
+          <ul className="mt-6 grid gap-x-8 gap-y-2 md:grid-cols-3">
+            {(
+              [
+                ["/docs", BookOpen, t.locale === "fr" ? "Docs" : "Docs", t.locale === "fr" ? "Comment marche chaque partie de l'appli, des guides sur les règles, les skills, Codex, Orca, et des antisèches à imprimer." : "How every part of the app works, guides on rules, skills, Codex and Orca, and cheat sheets to print."],
+                ["/setup", Download, t.locale === "fr" ? "Installer" : "Install", t.locale === "fr" ? "Les commandes à copier pour installer Claude Code, Codex, Gemini CLI, Antigravity et Orca sur macOS, Linux ou Windows." : "Copy-paste commands to install Claude Code, Codex, Gemini CLI, Antigravity and Orca on macOS, Linux or Windows."],
+                ["/commands", BookText, t.locale === "fr" ? "Référence" : "Reference", t.locale === "fr" ? "Chaque commande et chaque fichier, avec un exemple qui tourne avant et après." : "Every command and file, each with a live before-and-after example."],
+              ] as const
+            ).map(([href, Icon, title, body]) => (
+              <li key={href}>
+                <Link href={href} className="group flex gap-3 border-t border-line py-4">
+                  <Icon className="mt-0.5 size-5 shrink-0 text-accent-fg" aria-hidden />
+                  <span>
+                    <span className="flex items-center gap-1 font-semibold group-hover:text-accent-fg">
+                      {title} <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                    </span>
+                    <span className="mt-1 block text-sm text-fg-2">{body}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section className="mx-auto max-w-6xl px-4 pt-14 pb-20">
@@ -150,6 +189,9 @@ export function Landing() {
               </Link>
               <Link href="/setup" className="hover:text-fg-2">
                 {t("nav.setup")}
+              </Link>
+              <Link href="/docs" className="hover:text-fg-2">
+                {t("nav.docs")}
               </Link>
               <Link href="/profile" className="hover:text-fg-2">
                 {t("landing.footerSettings")}

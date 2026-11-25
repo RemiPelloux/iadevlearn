@@ -65,7 +65,7 @@ export function RunPanel({ onOpenFile }: { onOpenFile?: (path: string) => void }
           <ul className="space-y-1">
             {run.assumed.map((a) => (
               <li key={a} className="rounded-md bg-warn-soft px-2 py-1 text-xs text-fg">
-                <span className="font-semibold text-warn">{checkLabel(a)}</span> — {l("your prompt (and your rules) didn't say it. See the yellow line in the terminal.", "ton prompt (et tes règles) ne le disaient pas. Vois la ligne jaune dans le terminal.")}
+                <span className="font-semibold text-warn">{checkLabel(a)}</span>{l(": ", " : ")}{l("your prompt (and your rules) didn't say it. See the yellow line in the terminal.", "ton prompt (et tes règles) ne le disaient pas. Vois la ligne jaune dans le terminal.")}
               </li>
             ))}
           </ul>
@@ -90,7 +90,7 @@ export function RunPanel({ onOpenFile }: { onOpenFile?: (path: string) => void }
             ))}
           </ul>
         ) : (
-          <p className="text-xs text-fg-3">{l("None — the agent knew nothing about your project's conventions.", "Aucune — l'agent ne savait rien des conventions de ton projet.")}</p>
+          <p className="text-xs text-fg-3">{l("None. The agent knew nothing about your project's conventions.", "Aucune. L'agent ne savait rien des conventions de ton projet.")}</p>
         )}
         {followed.length > 0 && (
           <p className="mt-1.5 text-xs text-fg-2">
@@ -129,7 +129,7 @@ export function RunPanel({ onOpenFile }: { onOpenFile?: (path: string) => void }
         </Section>
       )}
 
-      <Section icon={<span className="size-3.5 rounded-sm bg-accent-mark" />} title={l(`Context ≈ ${run.tokens.toLocaleString()} tokens`, `Contexte ≈ ${run.tokens.toLocaleString()} tokens`)}>
+      <Section icon={<span className="size-3.5 rounded-sm bg-accent-mark" />} title={l(`Context ≈ ${run.tokens.toLocaleString("en")} tokens`, `Contexte ≈ ${run.tokens.toLocaleString("fr")} tokens`)}>
         <ul className="space-y-0.5 text-xs">
           {run.context.map((c, i) => (
             <li key={i} className="flex items-center gap-2">
