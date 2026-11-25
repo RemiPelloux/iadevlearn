@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { execute, type World } from "@/engine";
 import { ALL_LESSON_DEFS } from "../index";
 import { localizeLesson } from "../localize";
+import { MODULE_SOLUTIONS, MODULES, STORIES } from "../registry";
 import { CHANGELOG_SKILL, P_DISCOUNT, P_EURO, P_TOTAL, README_SKILL } from "../scenario";
 import type { Lesson } from "../types";
 
 /** How a learner solves each challenge (inputs, in order). File edits are written as { path: content }. */
-const SOLUTIONS: Record<string, Array<string | Record<string, string>>> = {
+const BASE_SOLUTIONS: Record<string, Array<string | Record<string, string>>> = {
   "first-prompt": [P_DISCOUNT],
   "context-window": [`claude -p "${P_EURO}"`],
   "plan-verify": [P_TOTAL, "yes"],
@@ -40,6 +41,8 @@ const SOLUTIONS: Record<string, Array<string | Record<string, string>>> = {
     "git merge fix-total",
   ],
 };
+
+const SOLUTIONS = { ...BASE_SOLUTIONS, ...MODULE_SOLUTIONS };
 
 function play(lesson: Lesson, locale: "en" | "fr") {
   const start = lesson.setup();
@@ -109,6 +112,20 @@ describe("curriculum text", () => {
       ids.add(def.id);
       expect(def.steps.at(-1)?.kind).toBe("celebrate");
     }
+  });
+
+  it("every story scene exists and has steps, and no copy uses em or en dashes", () => {
+    for (const def of ALL_LESSON_DEFS)
+      for (const step of def.steps)
+        if (step.kind === "discover" && step.scene.startsWith("story:")) expect(STORIES[step.scene.slice(6)]?.steps.length, `${def.id}: ${step.scene}`).toBeGreaterThan(0);
+    const dash = /[\u2013\u2014]/;
+    const walk = (v: unknown, path: string) => {
+      if (typeof v === "string") expect(dash.test(v), `${path} contains a dash: ${v.slice(0, 80)}`).toBe(false);
+      else if (Array.isArray(v)) v.forEach((x, i) => walk(x, `${path}[${i}]`));
+      else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) walk(x, `${path}.${k}`);
+    };
+    for (const def of Object.values(MODULES).flatMap((m) => m.lessons)) walk(def, def.id);
+    for (const [id, s] of Object.entries(STORIES)) walk(s, `story:${id}`);
   });
 
   it("the changelog skill is valid", () => {

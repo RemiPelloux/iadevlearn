@@ -3,6 +3,7 @@ import { contextWindow, firstPrompt, planVerify, whatIsAgent } from "./lessons/b
 import { goodRules, oneRulebook, whatAreRules } from "./lessons/rules";
 import { whatIsSkill, writeSkill } from "./lessons/skills";
 import { agentTeam, antigravityWorkflows, codexSandbox, parallelWorktrees } from "./lessons/tools";
+import { MODULES } from "./registry";
 import type { ChapterDef, LessonDef, Tier } from "./types";
 
 export const CHAPTER_DEFS: ChapterDef[] = [
@@ -21,8 +22,8 @@ export const CHAPTER_DEFS: ChapterDef[] = [
     title: L("The art of prompting", "L'art du prompt"),
     tier: "beginner",
     description: L("Context, precision, plans and verification.", "Contexte, précision, plans et vérification."),
-    lessons: [contextWindow, planVerify],
-    upcoming: [L("Iterating: correcting an agent mid-task", "Itérer : corriger un agent en cours de route"), L("Prompting with screenshots and errors", "Prompter avec des captures et des erreurs")],
+    lessons: [contextWindow, planVerify, ...MODULES.promptingMore.lessons],
+    upcoming: [],
   },
   {
     id: "rules",
@@ -30,8 +31,8 @@ export const CHAPTER_DEFS: ChapterDef[] = [
     title: L("Rules: teach your agent once", "Les règles : apprends une fois à ton agent"),
     tier: "intermediate",
     description: L("CLAUDE.md, AGENTS.md, GEMINI.md, and how to write rules that work.", "CLAUDE.md, AGENTS.md, GEMINI.md, et comment écrire des règles qui marchent."),
-    lessons: [whatAreRules, oneRulebook, goodRules],
-    upcoming: [L("Rules for one folder only", "Des règles pour un seul dossier"), L("Cursor rules (.mdc) and globs", "Les règles Cursor (.mdc) et les globs")],
+    lessons: [whatAreRules, oneRulebook, goodRules, ...MODULES.rulesMore.lessons],
+    upcoming: [],
   },
   {
     id: "skills",
@@ -39,8 +40,8 @@ export const CHAPTER_DEFS: ChapterDef[] = [
     title: L("Skills: know-how on demand", "Les skills : du savoir-faire à la demande"),
     tier: "intermediate",
     description: L("SKILL.md, progressive disclosure, and skills that work in every agent.", "SKILL.md, divulgation progressive, et des skills qui marchent dans tous les agents."),
-    lessons: [whatIsSkill, writeSkill],
-    upcoming: [L("Skills with scripts and reference files", "Des skills avec scripts et fichiers de référence")],
+    lessons: [whatIsSkill, writeSkill, ...MODULES.skillsMore.lessons],
+    upcoming: [],
   },
   {
     id: "tools",
@@ -48,8 +49,8 @@ export const CHAPTER_DEFS: ChapterDef[] = [
     title: L("Codex, Antigravity & co", "Codex, Antigravity et cie"),
     tier: "advanced",
     description: L("Sandboxes, approvals, workflows: each tool's superpowers.", "Sandboxes, approbations, workflows : les super-pouvoirs de chaque outil."),
-    lessons: [codexSandbox, antigravityWorkflows],
-    upcoming: [L("Gemini CLI in depth", "Gemini CLI en détail"), L("Cursor's agent", "L'agent de Cursor")],
+    lessons: [codexSandbox, antigravityWorkflows, ...MODULES.toolsMore.lessons],
+    upcoming: [],
   },
   {
     id: "orca",
@@ -57,8 +58,8 @@ export const CHAPTER_DEFS: ChapterDef[] = [
     title: L("Orca: a team of agents", "Orca : une équipe d'agents"),
     tier: "advanced",
     description: L("Worktrees, parallel agents, review and merge.", "Worktrees, agents en parallèle, relecture et fusion."),
-    lessons: [parallelWorktrees, agentTeam],
-    upcoming: [L("Orchestration runs: a coordinator and workers", "Les runs d'orchestration : un coordinateur et des workers"), L("Automations on a schedule", "Les automatisations planifiées")],
+    lessons: [parallelWorktrees, agentTeam, ...MODULES.orcaMore.lessons],
+    upcoming: [],
   },
   {
     id: "mcp",
@@ -66,8 +67,8 @@ export const CHAPTER_DEFS: ChapterDef[] = [
     title: L("MCP, hooks & subagents", "MCP, hooks et sous-agents"),
     tier: "expert",
     description: L("Give agents new tools, guardrails and helpers.", "Donne aux agents de nouveaux outils, des garde-fous et des assistants."),
-    lessons: [],
-    upcoming: [L("What is MCP?", "C'est quoi, MCP ?"), L("The context cost of tools", "Le coût en contexte des outils"), L("Hooks: run code on every edit", "Les hooks : du code à chaque modification"), L("Subagents", "Les sous-agents")],
+    lessons: MODULES.mcp.lessons,
+    upcoming: [],
   },
   {
     id: "safety",
@@ -75,8 +76,17 @@ export const CHAPTER_DEFS: ChapterDef[] = [
     title: L("Safety & trust", "Sécurité et confiance"),
     tier: "expert",
     description: L("Secrets, prompt injection and reviewing agent code.", "Secrets, injection de prompt et relecture du code des agents."),
-    lessons: [],
-    upcoming: [L("Keep secrets out of the context", "Garder les secrets hors du contexte"), L("Prompt injection", "L'injection de prompt"), L("Reviewing an agent's diff", "Relire le diff d'un agent")],
+    lessons: MODULES.safety.lessons,
+    upcoming: [],
+  },
+  {
+    id: "ship",
+    number: 9,
+    title: L("Ship it: real work with agents", "Livrer : du vrai travail avec des agents"),
+    tier: "expert",
+    description: L("Commits, end-to-end features and the habits of people who ship with agents every day.", "Commits, fonctionnalités de bout en bout et les habitudes de ceux qui livrent avec des agents tous les jours."),
+    lessons: MODULES.ship.lessons,
+    upcoming: [],
   },
 ];
 

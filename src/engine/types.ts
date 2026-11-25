@@ -13,7 +13,7 @@
 export type FileMap = Record<string, string>;
 
 /** The coding agents the simulator models. */
-export type ToolId = "claude" | "codex" | "gemini" | "antigravity";
+export type ToolId = "claude" | "codex" | "gemini" | "antigravity" | "cursor";
 
 export type Locale = "en" | "fr";
 
@@ -28,7 +28,7 @@ export interface PromptReport {
   files: string[];
 }
 
-export type ContextKind = "system" | "rules" | "skill-index" | "skill" | "workflow" | "file" | "prompt" | "mcp";
+export type ContextKind = "system" | "rules" | "skill-index" | "skill" | "workflow" | "file" | "prompt" | "mcp" | "subagent" | "image" | "conversation";
 
 export interface ContextItem {
   kind: ContextKind;
@@ -65,6 +65,22 @@ export interface AgentRun {
   /** Loop phases the agent went through. */
   phases: Array<"read" | "plan" | "act" | "verify" | "report">;
   tokens: number;
+  /** Hook commands that ran automatically (Claude Code .claude/settings.json). */
+  hooks?: string[];
+  /** Subagent the work was delegated to, and how many tokens it used in its own context. */
+  subagent?: { name: string; tokens: number } | null;
+  /** MCP servers whose tools the agent called. */
+  mcpUsed?: string[];
+  /** Files with secrets that ended up in the context window. */
+  secrets?: string[];
+  /** A prompt injection found in a file the agent read, and what happened. */
+  injection?: { path: string; command: string; outcome: "ran" | "refused" | "blocked" } | null;
+  /** How to undo this run (/rewind): each changed path's previous content (null = it didn't exist). */
+  undo?: Record<string, string | null>;
+  /** The prompt built on the previous message in the same session. */
+  followUp?: boolean;
+  /** Failing tests after the run (0 = all green). */
+  failing?: number;
 }
 
 export interface Session {
@@ -76,6 +92,10 @@ export interface Session {
   /** Flags the session was started with (e.g. codex --sandbox read-only). */
   sandbox?: string;
   approval?: string;
+  /** What you said earlier in this session: agents remember the conversation until /clear. */
+  history?: string[];
+  /** Started with --dangerously-skip-permissions (Claude) or --yolo (Gemini): no approval prompts at all. */
+  yolo?: boolean;
 }
 
 export type WorktreeStatus = "todo" | "in-progress" | "in-review" | "completed";
@@ -117,6 +137,52 @@ export interface World {
   git: GitState;
   user: { name: string };
   seq: number;
+  /** Orca orchestration: a coordinator's Run, its tasks and its inbox. */
+  orchestration?: Orchestration;
+  /** Orca automations: prompts that run on a schedule. */
+  automations?: Automation[];
+}
+
+export type TaskStatus = "pending" | "ready" | "dispatched" | "completed" | "failed" | "blocked";
+
+export interface OrchTask {
+  id: string;
+  title: string;
+  spec: string;
+  deps: string[];
+  status: TaskStatus;
+  /** Worktree the worker ran in, and its agent. */
+  worktree?: string;
+  agent?: ToolId;
+  result?: string;
+}
+
+export interface OrchMessage {
+  id: string;
+  from: string;
+  subject: string;
+  body: string;
+  read: boolean;
+}
+
+export interface Orchestration {
+  run: { id: string; objective: string } | null;
+  tasks: OrchTask[];
+  inbox: OrchMessage[];
+}
+
+export interface Automation {
+  id: string;
+  name: string;
+  /** hourly, daily, weekdays, weekly, or a 5-field cron expression. */
+  trigger: string;
+  time?: string;
+  day?: number;
+  prompt: string;
+  provider: ToolId;
+  enabled: boolean;
+  /** Each manual or scheduled run: the worktree it used and the outcome. */
+  runs: Array<{ id: number; worktree: string; outcome: Outcome; run: number }>;
 }
 
 export type LineKind =

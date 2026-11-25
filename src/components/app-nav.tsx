@@ -5,7 +5,7 @@ import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, BookText, Check, Download, Flame, FlaskConical, HardDrive, Languages, Map as MapIcon, Moon, Sun, UserRound, UserRoundPlus } from "lucide-react";
+import { BookOpen, BookText, Check, Download, Sparkles, Flame, FlaskConical, HardDrive, Languages, Map as MapIcon, Moon, Sun, UserRound, UserRoundPlus } from "lucide-react";
 import { readIndex, switchProfile, type ProfileIndex } from "@/features/progress/profiles";
 import { useProgress } from "@/features/progress/store";
 import { dayKey, levelFor, streak } from "@/features/progress/rules";
@@ -18,6 +18,7 @@ const LINKS = [
   { href: "/playground", key: "nav.playground", icon: FlaskConical, mobile: true, desktop: true },
   { href: "/commands", key: "nav.commands", icon: BookText, mobile: true, desktop: true },
   { href: "/docs", key: "nav.docs", icon: BookOpen, mobile: true, desktop: true },
+  { href: "/skills", key: "nav.skills", icon: Sparkles, mobile: false, desktop: true },
   { href: "/setup", key: "nav.setup", icon: Download, mobile: false, desktop: true },
   { href: "/profile", key: "nav.profile", icon: UserRound, mobile: true, desktop: false },
 ] as const;

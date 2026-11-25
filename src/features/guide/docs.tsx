@@ -141,6 +141,11 @@ function Sidebar({ current }: { current?: string }) {
               </Link>
             </li>
             <li>
+              <Link href="/skills" className="block rounded-lg px-2 py-1.5 text-sm text-fg-2 hover:bg-surface-2 hover:text-fg">
+                {l("Skills hub", "Bibliothèque de skills")}
+              </Link>
+            </li>
+            <li>
               <Link href="/commands" className="block rounded-lg px-2 py-1.5 text-sm text-fg-2 hover:bg-surface-2 hover:text-fg">
                 {l("Command reference", "Référence des commandes")}
               </Link>

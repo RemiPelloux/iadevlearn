@@ -1,13 +1,19 @@
-import { codexSettings, isApproval, lastRun, MCP_TOKENS, runAgent, startupContext, viewFiles } from "./agent";
+import { codexSettings, isApproval, lastRun, mcpTokens, runAgent, startupContext, viewFiles } from "./agent";
+import { addMemory, expandCommand, GEMINI_MEMORY_FILE, listGeminiCommands } from "./gemini";
+import { claudeSettings } from "./settings";
+import { listSubagents } from "./subagents";
 import { fail, tx, type Ctx } from "./context";
 import { getProject } from "./projects";
 import { INIT_FILE, loadRules, TOOL_NAMES } from "./rules";
 import { listSkills, listWorkflows } from "./skills";
 import type { ToolId } from "./types";
 
-export const TOOLS: ToolId[] = ["claude", "codex", "gemini", "antigravity"];
+export const TOOLS: ToolId[] = ["claude", "codex", "gemini", "antigravity", "cursor"];
 
-export const SESSION_PROMPT: Record<ToolId, string> = { claude: ">", codex: "›", gemini: ">", antigravity: "▸" };
+/** The command that starts each tool in a terminal. */
+export const TOOL_COMMAND: Record<ToolId, string> = { claude: "claude", codex: "codex", gemini: "gemini", antigravity: "antigravity", cursor: "cursor-agent" };
+
+export const SESSION_PROMPT: Record<ToolId, string> = { claude: ">", codex: "›", gemini: ">", antigravity: "▸", cursor: "→" };
 
 /** Pull `--flag value` / `-f value` options out of argv. */
 export function takeFlag(args: string[], names: string[], hasValue = true): string | true | undefined {
@@ -42,6 +48,7 @@ function banner(ctx: Ctx, tool: ToolId) {
     codex: ">_ OpenAI Codex (simulated)",
     gemini: "✦ Gemini CLI (simulated)",
     antigravity: "◆ Antigravity · Agent Manager (simulated)",
+    cursor: "⬢ Cursor Agent (simulated)",
   };
   ctx.out(titles[tool], "agent");
   if (tool === "codex") {
@@ -53,19 +60,36 @@ function banner(ctx: Ctx, tool: ToolId) {
   ctx.out(
     rules.length
       ? tx(`  Rules loaded: ${rules.map((r) => r.path).join(", ")}`, `  Règles chargées : ${rules.map((r) => r.path).join(", ")}`)
-      : tx(`  No rules file found (${tool === "claude" ? "CLAUDE.md" : tool === "codex" ? "AGENTS.md" : tool === "gemini" ? "GEMINI.md" : "AGENTS.md / .agents/rules/"}). Try /init.`, `  Aucun fichier de règles (${tool === "claude" ? "CLAUDE.md" : tool === "codex" ? "AGENTS.md" : tool === "gemini" ? "GEMINI.md" : "AGENTS.md / .agents/rules/"}). Essaie /init.`),
+      : tool === "cursor"
+        ? tx("  No rules found (AGENTS.md or .cursor/rules/*.mdc).", "  Aucune règle trouvée (AGENTS.md ou .cursor/rules/*.mdc).")
+        : tx(`  No rules file found (${tool === "claude" ? "CLAUDE.md" : tool === "codex" ? "AGENTS.md" : tool === "gemini" ? "GEMINI.md" : "AGENTS.md / .agents/rules/"}). Try /init.`, `  Aucun fichier de règles (${tool === "claude" ? "CLAUDE.md" : tool === "codex" ? "AGENTS.md" : tool === "gemini" ? "GEMINI.md" : "AGENTS.md / .agents/rules/"}). Essaie /init.`),
     "muted",
   );
   if (skills.length) ctx.out(tx(`  Skills: ${skills.map((s) => s.name).join(", ")}`, `  Skills : ${skills.map((s) => s.name).join(", ")}`), "muted");
-  if (mcp.length) ctx.out(`  MCP: ${mcp.map((m) => m.name).join(", ")}`, "muted");
+  if (mcp.length) ctx.out(`  MCP: ${mcp.map((m) => m.name).join(", ")} (≈${(mcp.reduce((n, m) => n + mcpTokens(m), 0) / 1000).toFixed(1)}k tokens)`, "muted");
+  if (tool === "claude") {
+    const agents = listSubagents(view, tool);
+    if (agents.length) ctx.out(`  Subagents: ${agents.map((a) => a.name).join(", ")}`, "muted");
+    const st = claudeSettings(view);
+    if (st.hooks.length) ctx.out(tx(`  Hooks: ${st.hooks.length} (/hooks to list them)`, `  Hooks : ${st.hooks.length} (/hooks pour les lister)`), "muted");
+    for (const e of st.errors) ctx.out(tx(`  ⚠ ${e.path} is not valid JSON: ${e.error}`, `  ⚠ ${e.path} n'est pas du JSON valide : ${e.error}`), "warning");
+  }
+  if (tool === "gemini") {
+    const cmds = listGeminiCommands(view);
+    if (cmds.length) ctx.out(tx(`  Custom commands: ${cmds.map((c) => "/" + c.name).join(", ")}`, `  Commandes perso : ${cmds.map((c) => "/" + c.name).join(", ")}`), "muted");
+  }
   ctx.out(tx("  Type a request in plain words · /help for commands · /exit to leave", "  Écris ta demande avec tes mots · /help pour les commandes · /exit pour sortir"), "muted");
 }
 
-function startSession(ctx: Ctx, tool: ToolId, opts: { plan?: boolean; sandbox?: string; approval?: string } = {}) {
+function startSession(ctx: Ctx, tool: ToolId, opts: { plan?: boolean; sandbox?: string; approval?: string; yolo?: boolean } = {}) {
   if (ctx.world.session) fail(tx(`You're already in ${TOOL_NAMES[ctx.world.session.tool]}. Type /exit first.`, `Tu es déjà dans ${TOOL_NAMES[ctx.world.session.tool]}. Tape d'abord /exit.`));
-  ctx.world.session = { tool, plan: !!opts.plan, pending: null, sandbox: opts.sandbox, approval: opts.approval };
+  ctx.world.session = { tool, plan: !!opts.plan, pending: null, sandbox: opts.sandbox, approval: opts.approval, history: [] };
   banner(ctx, tool);
   if (opts.plan) ctx.out(tx("  ⏸ plan mode on", "  ⏸ mode plan activé"), "hint");
+  if (opts.yolo) {
+    ctx.world.session.yolo = true;
+    ctx.out(tx("  ⚠ approvals off: the agent will run any command without asking you", "  ⚠ approbations désactivées : l'agent lancera n'importe quelle commande sans te demander"), "warning");
+  }
   ctx.emit({ type: "session-start", tool });
 }
 
@@ -79,7 +103,7 @@ function mcpCommand(ctx: Ctx, tool: ToolId, args: string[]) {
   const own = ctx.world.mcp.filter((m) => m.tool === tool);
   if (sub === "list" || !sub) {
     if (!own.length) ctx.out(tx("No MCP servers configured.", "Aucun serveur MCP configuré."), "muted");
-    for (const m of own) ctx.out(`${m.name}: ${m.command} - ✓ Connected`);
+    for (const m of own) ctx.out(`${m.name}: ${m.command} · ✓ Connected · ≈${mcpTokens(m)} tokens`);
     return;
   }
   if (sub === "add") {
@@ -89,7 +113,8 @@ function mcpCommand(ctx: Ctx, tool: ToolId, args: string[]) {
     if (!name || !command) fail(`usage: ${tool} mcp add <name> -- <command>`, tx("An MCP server needs a name and the command that starts it, e.g. claude mcp add docs -- npx docs-mcp", "Un serveur MCP a besoin d'un nom et de la commande qui le lance, ex. claude mcp add docs -- npx docs-mcp"));
     if (own.some((m) => m.name === name)) fail(tx(`MCP server ${name} already exists.`, `Le serveur MCP ${name} existe déjà.`));
     ctx.world.mcp = [...ctx.world.mcp, { tool, name, command }];
-    ctx.out(tx(`Added MCP server ${name} for ${TOOL_NAMES[tool]}. Its tools now cost ≈${MCP_TOKENS} tokens of context in every session.`, `Serveur MCP ${name} ajouté pour ${TOOL_NAMES[tool]}. Ses outils coûtent maintenant ≈${MCP_TOKENS} tokens de contexte à chaque session.`), "success");
+    const cost = mcpTokens({ name, command });
+    ctx.out(tx(`Added MCP server ${name} for ${TOOL_NAMES[tool]}. Its tools now cost ≈${cost} tokens of context in every session.`, `Serveur MCP ${name} ajouté pour ${TOOL_NAMES[tool]}. Ses outils coûtent maintenant ≈${cost} tokens de contexte à chaque session.`), "success");
     ctx.emit({ type: "mcp-add", name });
     return;
   }
@@ -115,12 +140,15 @@ export function toolCommand(ctx: Ctx, tool: ToolId, argv: string[]): string {
       claude: ['claude                 start an interactive session', 'claude "request"       start a session with a first request', 'claude -p "request"    answer once and exit (headless)', "claude --permission-mode plan   start in plan mode", "claude mcp add|list|remove      manage MCP servers"],
       codex: ['codex                  start an interactive session', 'codex "request"        start with a first request', 'codex exec "request"   run once without the UI (headless)', "-s, --sandbox <read-only|workspace-write|danger-full-access>", "-a, --ask-for-approval <untrusted|on-request|never>", "--full-auto            workspace-write sandbox + on-request approvals", "codex mcp add|list|remove"],
       gemini: ["gemini                 start an interactive session", 'gemini -p "request"    answer once and exit', "gemini mcp add|list|remove"],
-      antigravity: ["antigravity            open the Agent Manager (here: a chat in the terminal)", "  /<workflow>          run a workflow from .agents/workflows/", "  /plan                switch between Planning and Fast mode"],
+      antigravity: ["antigravity, agy        open the Antigravity agent (here: a chat in the terminal)", 'agy -i "request"       start a session with a first request', 'agy -p "request"       run one request and print the answer', "  /<workflow>          run a workflow from .agents/workflows/ (deprecated: use skills)", "  /plan                switch between Planning and Fast mode"],
+      cursor: ["cursor-agent           start an interactive session", 'cursor-agent "request" start with a first request', 'cursor-agent -p "request"   answer once and exit (headless)', "--force                run commands without asking", "Rules: AGENTS.md and .cursor/rules/*.mdc"],
     };
+    if (tool === "claude") help.claude.push("--dangerously-skip-permissions   never ask before acting (risky)");
+    if (tool === "gemini") help.gemini.push("-y, --yolo             accept every action without asking (risky)");
     ctx.out(help[tool], "muted");
     return `${tool} --help`;
   }
-  if (args[0] === "mcp" && tool !== "antigravity") {
+  if (args[0] === "mcp" && tool !== "antigravity" && tool !== "cursor") {
     mcpCommand(ctx, tool, args.slice(1));
     return `${tool} mcp`;
   }
@@ -162,18 +190,35 @@ export function toolCommand(ctx: Ctx, tool: ToolId, argv: string[]): string {
     return "codex";
   }
 
-  if (tool === "claude" || tool === "gemini") {
+  if (tool === "claude" || tool === "gemini" || tool === "cursor") {
+    const yolo = !!takeFlag(args, tool === "claude" ? ["--dangerously-skip-permissions"] : tool === "gemini" ? ["--yolo", "-y"] : ["--force", "-f"], false);
     const p = takeFlag(args, ["-p", "--print", "--prompt"]);
-    const mode = takeFlag(args, ["--permission-mode"]);
+    const mode = tool === "claude" ? takeFlag(args, ["--permission-mode"]) : undefined;
+    const name = TOOL_COMMAND[tool];
     if (p !== undefined) {
-      runAgent(ctx, tool, requirePrompt(p === true ? undefined : p || args.join(" "), `${tool} -p "<request>"`));
-      return `${tool} -p`;
+      runAgent(ctx, tool, requirePrompt(p === true ? undefined : p || args.join(" "), `${name} -p "<request>"`), { yolo });
+      return `${name} -p`;
     }
-    if (mode && mode !== "plan" && mode !== "default" && mode !== "acceptEdits") fail(`error: invalid permission mode '${mode}'`);
+    if (mode && mode !== "plan" && mode !== "default" && mode !== "acceptEdits" && mode !== "bypassPermissions") fail(`error: invalid permission mode '${mode}'`);
     unknownFlag(args);
-    startSession(ctx, tool, { plan: mode === "plan" });
+    startSession(ctx, tool, { plan: mode === "plan", yolo: yolo || mode === "bypassPermissions" });
     if (args.length) runAgent(ctx, tool, args.join(" "));
-    return tool;
+    return name;
+  }
+
+  if (tool === "antigravity") {
+    // Antigravity CLI (agy): -p runs one prompt and prints the answer; -i opens a session with a first prompt.
+    const p = takeFlag(args, ["-p", "--prompt"]);
+    const i = takeFlag(args, ["-i", "--prompt-interactive"]);
+    if (p !== undefined) {
+      runAgent(ctx, tool, requirePrompt(p === true ? undefined : p || args.join(" "), 'agy -p "<request>"'));
+      return "agy -p";
+    }
+    unknownFlag(args);
+    startSession(ctx, tool);
+    const first = typeof i === "string" ? i : args.join(" ");
+    if (first) runAgent(ctx, tool, first);
+    return i !== undefined ? "agy -i" : tool;
   }
 
   unknownFlag(args);
@@ -194,24 +239,33 @@ function slashHelp(ctx: Ctx, tool: ToolId) {
     "/clear": ["clear the conversation", "efface la conversation"],
     "/compact": ["summarize the conversation to free context", "résume la conversation pour libérer du contexte"],
     "/exit": ["leave the agent, back to the shell", "quitter l'agent, retour au shell"],
+    "/rewind": ["undo the agent's last changes (checkpoint)", "annuler les derniers changements de l'agent (point de reprise)"],
+    "/agents": ["list subagents (.claude/agents/)", "lister les sous-agents (.claude/agents/)"],
+    "/hooks": ["list hooks from .claude/settings.json", "lister les hooks de .claude/settings.json"],
+    "/permissions": ["show allow and deny rules", "afficher les règles allow et deny"],
   };
   const per: Record<ToolId, string[]> = {
-    claude: ["/init", "/memory", "/context", "/skills", "/plan", "/mcp", "/clear", "/compact", "/exit"],
+    claude: ["/init", "/memory", "/context", "/skills", "/agents", "/hooks", "/permissions", "/plan", "/mcp", "/rewind", "/clear", "/compact", "/exit"],
     codex: ["/init", "/status", "/skills", "/mcp", "/compact", "/exit"],
     gemini: ["/init", "/memory", "/mcp", "/clear", "/compact", "/exit"],
     antigravity: ["/plan", "/skills", "/memory", "/exit"],
+    cursor: ["/clear", "/exit"],
   };
   for (const c of per[tool]) ctx.out(`  ${c.padEnd(10)} ${common[c][ctx.locale === "fr" ? 1 : 0]}`, "muted");
   if (tool === "antigravity") {
     const wfs = listWorkflows(viewFiles(ctx.world), tool);
     for (const w of wfs) ctx.out(`  /${w.name.padEnd(9)} ${w.description || "workflow"}`, "muted");
   }
+  if (tool === "gemini") {
+    ctx.out(tx("  /memory add <fact>   remember something in ~/.gemini/GEMINI.md", "  /memory add <fait>   retenir quelque chose dans ~/.gemini/GEMINI.md"), "muted");
+    for (const c of listGeminiCommands(viewFiles(ctx.world))) ctx.out(`  /${c.name.padEnd(9)} ${c.description || "custom command"}`, "muted");
+  }
   if (tool === "codex") ctx.out(tx("  $name     mention a skill explicitly", "  $nom      mentionner un skill explicitement"), "muted");
   if (tool === "claude") ctx.out(tx("  /name     run a skill by name · !cmd runs a shell command", "  /nom      lancer un skill par son nom · !cmd lance une commande shell"), "muted");
   ctx.out(tx("  Anything else you type is a request for the agent.", "  Tout le reste est une demande pour l'agent."), "muted");
 }
 
-const NOT_SIMULATED = ["/agents", "/hooks", "/permissions", "/config", "/doctor", "/review", "/cost", "/resume", "/login", "/logout", "/diff", "/undo", "/tools", "/settings", "/model"];
+const NOT_SIMULATED = ["/config", "/doctor", "/review", "/cost", "/resume", "/login", "/logout", "/diff", "/undo", "/tools", "/settings", "/model", "/chat", "/rules", "/auto-run", "/new-chat"];
 
 /**
  * Input typed while an agent session is open. Returns the recognized command
@@ -246,7 +300,7 @@ export function sessionInput(ctx: Ctx, input: string, shell: (line: string) => s
         slashHelp(ctx, tool);
         return "/help";
       case "/init": {
-        if (tool === "antigravity") break;
+        if (tool === "antigravity" || tool === "cursor") break;
         const path = INIT_FILE[tool];
         if (view[path] !== undefined) {
           ctx.out(tx(`${path} already exists. Edit it to improve your rules.`, `${path} existe déjà. Modifie-le pour améliorer tes règles.`), "muted");
@@ -263,6 +317,23 @@ export function sessionInput(ctx: Ctx, input: string, shell: (line: string) => s
         return "/init";
       }
       case "/memory": {
+        if (tool === "gemini" && rest[0] === "add") {
+          const fact = rest.slice(1).join(" ").replace(/^["']|["']$/g, "").trim();
+          if (!fact) fail("usage: /memory add <something to remember>", tx('For example: /memory add "I prefer pnpm over npm"', 'Par exemple : /memory add "Je préfère pnpm à npm"'));
+          ctx.world.files = addMemory(ctx.world.files, fact);
+          ctx.out(`✦ ${ctx.t(tx(`Saved to ${GEMINI_MEMORY_FILE}: “${fact}”`, `Enregistré dans ${GEMINI_MEMORY_FILE} : « ${fact} »`))}`, "success");
+          ctx.out(tx("  Every Gemini session, in every project, will load it from now on.", "  Toutes les sessions Gemini, dans tous les projets, le chargeront désormais."), "muted");
+          ctx.emit({ type: "rules-write", path: GEMINI_MEMORY_FILE });
+          ctx.emit({ type: "file-change", paths: [GEMINI_MEMORY_FILE] });
+          return "/memory add";
+        }
+        if (tool === "gemini" && rest[0] === "show") {
+          for (const r of loadRules(view, tool)) {
+            ctx.out(`--- ${r.path} ---`, "info");
+            ctx.out(r.content.replace(/\n$/, "").split("\n"));
+          }
+          return "/memory show";
+        }
         const rules = loadRules(view, tool);
         if (!rules.length) ctx.out(tx("No rules files loaded.", "Aucun fichier de règles chargé."), "muted");
         for (const r of rules) ctx.out(`  ${r.path}${r.importedBy ? `  (@ ${r.importedBy})` : ""} · ${r.content.split("\n").length} lines`, "out");
@@ -271,7 +342,8 @@ export function sessionInput(ctx: Ctx, input: string, shell: (line: string) => s
       case "/context": {
         if (tool !== "claude") break;
         const run = lastRun(ctx.world, "main");
-        const items = run && run.tool === tool ? run.context : startupContext(ctx.world, tool);
+        // The last prompt's context if it happened in this session, otherwise what the session loads right now.
+        const items = run && run.tool === tool && session.history?.includes(run.prompt) ? run.context : startupContext(ctx.world, tool);
         const total = items.reduce((n, c) => n + c.tokens, 0);
         ctx.out(tx(`Context usage ≈ ${(total / 1000).toFixed(1)}k tokens`, `Contexte utilisé ≈ ${(total / 1000).toFixed(1)}k tokens`), "info");
         for (const c of items) ctx.out(`  ${c.kind.padEnd(12)} ${String(c.tokens).padStart(5)}  ${c.label}`, "muted");
@@ -314,7 +386,57 @@ export function sessionInput(ctx: Ctx, input: string, shell: (line: string) => s
       }
       case "/clear":
         ctx.clear = true;
+        session.history = [];
+        session.pending = null;
         return "/clear";
+      case "/rewind": {
+        if (tool !== "claude") break;
+        const run = [...ctx.world.runs].reverse().find((r) => r.where === "main" && r.undo && Object.keys(r.undo).length);
+        if (!run?.undo) {
+          ctx.out(tx("Nothing to rewind: the agent hasn't changed any file yet.", "Rien à annuler : l'agent n'a encore modifié aucun fichier."), "muted");
+          return "/rewind";
+        }
+        const files = { ...ctx.world.files };
+        for (const [p, before] of Object.entries(run.undo)) {
+          if (before === null) delete files[p];
+          else files[p] = before;
+        }
+        ctx.world.files = files;
+        const paths = Object.keys(run.undo);
+        ctx.world.runs = ctx.world.runs.map((r) => (r.id === run.id ? { ...r, undo: undefined } : r));
+        session.history = (session.history ?? []).filter((h) => h !== run.prompt);
+        ctx.out(tx(`⏪ Rewound to before “${run.prompt.slice(0, 60)}”`, `⏪ Retour à avant « ${run.prompt.slice(0, 60)} »`), "info");
+        for (const p of paths) ctx.out(`  ${p}  ${ctx.t(run.undo[p] === null ? tx("removed", "supprimé") : tx("restored", "restauré"))}`, "muted");
+        ctx.out(tx("  The code and the conversation are back to that point. (Real Claude Code: press Esc twice.)", "  Le code et la conversation sont revenus à ce point. (Vrai Claude Code : appuie deux fois sur Échap.)"), "muted");
+        ctx.emit({ type: "file-change", paths });
+        return "/rewind";
+      }
+      case "/agents": {
+        if (tool !== "claude") break;
+        const agents = listSubagents(view, tool);
+        if (!agents.length) ctx.out(tx("No subagents yet. Create one in .claude/agents/<name>.md (frontmatter: name, description, tools).", "Aucun sous-agent. Crée-en un dans .claude/agents/<nom>.md (en-tête : name, description, tools)."), "muted");
+        for (const a of agents) {
+          ctx.out(`  ${a.name}: ${a.description || "(no description)"}`, a.problems.length ? "warning" : "out");
+          ctx.out(`    tools: ${a.tools.length ? a.tools.join(", ") : ctx.t(tx("all", "tous"))} · ${a.path}`, "muted");
+        }
+        return "/agents";
+      }
+      case "/hooks": {
+        if (tool !== "claude") break;
+        const st = claudeSettings(view);
+        for (const e of st.errors) ctx.out(tx(`⚠ ${e.path} is not valid JSON: ${e.error}`, `⚠ ${e.path} n'est pas du JSON valide : ${e.error}`), "warning");
+        if (!st.hooks.length) ctx.out(tx("No hooks. Add them under \"hooks\" in .claude/settings.json.", "Aucun hook. Ajoute-les sous \"hooks\" dans .claude/settings.json."), "muted");
+        for (const h of st.hooks) ctx.out(`  ${h.event}${h.matcher ? ` [${h.matcher}]` : ""} → ${h.command}   (${h.source})`);
+        return "/hooks";
+      }
+      case "/permissions": {
+        if (tool !== "claude") break;
+        const st = claudeSettings(view);
+        ctx.out(`  allow: ${st.allow.join(", ") || "—"}`);
+        ctx.out(`  deny:  ${st.deny.join(", ") || "—"}`, st.deny.length ? "out" : "muted");
+        if (session.yolo) ctx.out(tx("  ⚠ this session skips every permission prompt", "  ⚠ cette session saute toutes les demandes de permission"), "warning");
+        return "/permissions";
+      }
       case "/compact":
       case "/new":
         ctx.out(tx("Conversation summarized. Older messages now take a few hundred tokens instead of thousands.", "Conversation résumée. Les anciens messages prennent maintenant quelques centaines de tokens au lieu de milliers."), "muted");
@@ -330,12 +452,21 @@ export function sessionInput(ctx: Ctx, input: string, shell: (line: string) => s
       runAgent(ctx, tool, text);
       return "workflow";
     }
+    // Gemini CLI custom commands (.gemini/commands/*.toml) expand into a full prompt.
+    const custom = tool === "gemini" ? listGeminiCommands(view).find((c) => c.name === name) : undefined;
+    if (custom) {
+      if (custom.error) fail(tx(`${custom.path}: ${custom.error}`, `${custom.path} : ${custom.error}`), tx('A custom command needs a prompt: prompt = """…""" in the TOML file.', 'Une commande perso a besoin d\'un prompt : prompt = """…""" dans le fichier TOML.'));
+      const expanded = expandCommand(custom, rest.join(" "));
+      ctx.out(`✦ /${custom.name} → ${expanded.split("\n")[0].slice(0, 90)}${expanded.includes("\n") || expanded.length > 90 ? "…" : ""}`, "info");
+      runAgent(ctx, tool, expanded);
+      return "custom-command";
+    }
     if (NOT_SIMULATED.includes(cmd))
       fail(tx(`${cmd} exists in the real tool but isn't simulated here.`, `${cmd} existe dans le vrai outil mais n'est pas simulé ici.`), tx("Type /help to see what works in this simulator.", "Tape /help pour voir ce qui marche dans ce simulateur."));
     void rest;
     fail(tx(`Unknown command ${cmd}. Type /help.`, `Commande inconnue ${cmd}. Tape /help.`), tx("Slash commands are built into each tool, and they differ from tool to tool. /help lists them.", "Les commandes / sont propres à chaque outil, et elles changent d'un outil à l'autre. /help les liste."));
   }
-  if (/^(git|ls|cat|orca|npm|pnpm|cd|claude|codex|gemini|antigravity)(\s|$)/.test(text)) {
+  if (/^(git|ls|cat|orca|npm|pnpm|cd|claude|codex|gemini|antigravity|cursor-agent)(\s|$)/.test(text)) {
     const how = tool === "claude" || tool === "gemini" ? tx("prefix it with ! or type /exit", "ajoute ! devant ou tape /exit") : tx("type /exit first", "tape d'abord /exit");
     ctx.out(tx(`You're talking to ${TOOL_NAMES[tool]}, not the shell. To run a shell command, ${how.en}.`, `Tu parles à ${TOOL_NAMES[tool]}, pas au shell. Pour une commande shell, ${how.fr}.`), "hint");
     return "hint";

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Check, CircleDashed, GitMerge, MessageSquareText, X } from "lucide-react";
 import { lastRun, PROMPT_CHECKS, promptGrade, startupContext, TOOL_NAMES, TOOLS, type AgentRun, type ContextItem, type ContextKind, type Outcome, type PromptCheck, type SimEvent, type ToolId, type World, type Worktree } from "@/engine";
 import { useL } from "@/i18n";
+import { OrcaApp } from "./orca-app";
 
 export const KIND_COLOR: Record<ContextKind, string> = {
   system: "var(--text-3)",
@@ -16,6 +17,9 @@ export const KIND_COLOR: Record<ContextKind, string> = {
   file: "var(--lane-1)",
   mcp: "var(--lane-3)",
   prompt: "var(--accent-mark)",
+  subagent: "var(--lane-5)",
+  image: "var(--lane-2)",
+  conversation: "var(--text-2)",
 };
 
 export function useKindLabel() {
@@ -30,6 +34,9 @@ export function useKindLabel() {
       file: l("File", "Fichier"),
       mcp: "MCP",
       prompt: l("Your prompt", "Ton prompt"),
+      subagent: l("Subagent result", "Résultat du sous-agent"),
+      image: l("Image", "Image"),
+      conversation: l("Conversation", "Conversation"),
     })[k];
 }
 
@@ -68,8 +75,8 @@ export const OUTCOME_CLS: Record<Outcome, string> = {
   blocked: "bg-bad-soft text-bad",
 };
 
-export const TOOL_COLOR: Record<ToolId, string> = { claude: "var(--lane-0)", codex: "var(--lane-2)", gemini: "var(--lane-1)", antigravity: "var(--lane-4)" };
-const TOOL_SHORT: Record<ToolId, string> = { claude: "CC", codex: "CX", gemini: "GM", antigravity: "AG" };
+export const TOOL_COLOR: Record<ToolId, string> = { claude: "var(--lane-0)", codex: "var(--lane-2)", gemini: "var(--lane-1)", antigravity: "var(--lane-4)", cursor: "var(--lane-3)" };
+const TOOL_SHORT: Record<ToolId, string> = { claude: "CC", codex: "CX", gemini: "GM", antigravity: "AG", cursor: "CU" };
 
 export function ToolBadge({ tool, size = "sm" }: { tool: ToolId; size?: "sm" | "md" }) {
   return (
@@ -306,13 +313,8 @@ export function AgentView({ world, events, eventKey, compact, orca }: { world: W
   return (
     <div className="scrollbar-thin h-full overflow-y-auto bg-dots">
       <LayoutGroup>
-        <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4 sm:p-5">
-          {orca && (
-            <section className="rounded-xl border border-line bg-elevated/90 p-3 shadow-[var(--shadow-card)]">
-              <h3 className="mb-2 text-xs font-semibold text-fg-2">{l("Orca · worktrees & agents", "Orca · worktrees et agents")}</h3>
-              <OrcaLanes world={world} />
-            </section>
-          )}
+        <div className={clsx("mx-auto flex flex-col gap-4 p-4 sm:p-5", orca ? "max-w-5xl" : "max-w-3xl")}>
+          {orca && <OrcaApp world={world} />}
 
           <section className="rounded-xl border border-line bg-elevated/90 p-3 shadow-[var(--shadow-card)]" aria-live="polite">
             <div className="mb-2 flex flex-wrap items-center gap-2">

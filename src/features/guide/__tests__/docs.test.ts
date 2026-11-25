@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ALL_LESSON_DEFS } from "@/features/curriculum";
 import { DOC_PAGES } from "../pages";
 
-const ROUTES = new Set(["/", "/learn", "/playground", "/commands", "/docs", "/setup", "/profile", "/welcome"]);
+const ROUTES = new Set(["/", "/learn", "/playground", "/commands", "/docs", "/setup", "/skills", "/profile", "/welcome"]);
 const ok = (href: string) => {
   const path = href.split("#")[0];
   if (ROUTES.has(path)) return true;

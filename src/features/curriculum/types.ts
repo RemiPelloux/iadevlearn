@@ -32,7 +32,30 @@ export type SceneId =
   | "skill-anatomy"
   | "sandbox"
   | "antigravity"
-  | "worktrees";
+  | "worktrees"
+  /** A step-by-step story from a lesson file's `stories` (see StoryDef). */
+  | `story:${string}`;
+
+/**
+ * A "Discover" walkthrough written as data: press Next to reveal each step,
+ * with a terminal line and a plain-language note. Rendered by scenes-more.tsx.
+ */
+export interface StoryDef {
+  /** What the learner asked, shown at the top (optional). */
+  prompt?: Txt;
+  /** Shown before the first step. */
+  intro: Txt;
+  steps: Array<{
+    name: Txt;
+    /** The terminal line for this step (code stays as written). */
+    line: string;
+    note: Txt;
+    tone?: "tool" | "ok" | "bad" | "warn" | "agent" | "muted";
+  }>;
+}
+
+/** How the lesson test solves a challenge: commands, or { path: content } file edits, in order. */
+export type Solution = Array<string | Record<string, string>>;
 
 export interface DiscoverStep {
   kind: "discover";

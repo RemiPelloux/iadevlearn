@@ -3,6 +3,8 @@ import { Ctx, fail, tx } from "./context";
 import { diffLines, hunks, splitLines } from "./diff";
 import { objectId } from "./hash";
 import { TOOL_NAMES } from "./rules";
+import { automationsCommand, orchestrationCommand } from "./orchestration";
+import { gitIgnored } from "./security";
 import { takeFlag, TOOLS } from "./tools";
 import type { FileMap, ToolId, Worktree, WorktreeStatus } from "./types";
 
@@ -42,13 +44,31 @@ function orcaHelp(ctx: Ctx) {
       "  terminal create --worktree <n> --command <agent>",
       "  terminal send --terminal <handle> --text \"…\" --enter",
       "  terminal read --terminal <handle>",
+      "Orchestration (a coordinator and workers):",
+      "  orchestration run-create --objective \"…\"",
+      "  orchestration task-create --spec \"…\" [--task-title <t>] [--deps '[\"task_1\"]']",
+      "  orchestration task-list [--ready] · task-update --id <task> --status <s>",
+      "  orchestration worker-start --task <task> --agent <agent> [--name <worktree>]",
+      "  orchestration check [--all] · send --subject \"…\" [--body \"…\"]",
+      "Automations (prompts on a schedule):",
+      "  automations create --name <n> --trigger daily|weekdays|weekly|hourly|<cron> [--time HH:MM] --prompt \"…\" --provider <agent> --repo path:~/project [--disabled]",
+      "  automations list | show <id> | run <id> | runs --id <id> | edit <id> [...] | remove <id>",
       "Other: status · repo list",
     ],
     "muted",
   );
 }
 
-function sendPrompt(ctx: Ctx, wt: Worktree, tool: ToolId, prompt: string) {
+/** Create a worktree from main (shared by worktree create, orchestration workers and automations). */
+export function addWorktree(ctx: Ctx, name: string, agent: ToolId | null): Worktree {
+  const files = projectFiles(ctx.world.files);
+  const wt: Worktree = { name, branch: name, agent, status: "todo", comment: "", base: files, files: { ...files }, runs: [], merged: false, log: [] };
+  ctx.world.worktrees = [...ctx.world.worktrees, wt];
+  ctx.emit({ type: "worktree-create", name, agent });
+  return ctx.world.worktrees.find((w) => w.name === name)!;
+}
+
+export function sendPrompt(ctx: Ctx, wt: Worktree, tool: ToolId, prompt: string) {
   // The agent works in the background in its own worktree: its output goes to that terminal.
   const sub = new Ctx(ctx.world, ctx.locale);
   sub.out(`${tool} › ${prompt}`, "muted");
@@ -78,6 +98,9 @@ export function orcaCommand(ctx: Ctx, argv: string[]): string {
     return "orca repo";
   }
 
+  if (group === "orchestration") return orchestrationCommand(ctx, sub, rest);
+  if (group === "automations" || group === "automation") return automationsCommand(ctx, sub, rest);
+
   if (group === "worktree") {
     switch (sub) {
       case "create": {
@@ -89,15 +112,12 @@ export function orcaCommand(ctx: Ctx, argv: string[]): string {
         if (typeof name !== "string" || !name) fail("error: --name <name> is required", tx("Give the worktree a short name for its task, e.g. --name fix-total.", "Donne au worktree un nom court pour sa tâche, ex. --name fix-total."));
         if (!/^[\w./-]+$/.test(name)) fail(`error: invalid worktree name '${name}'`, tx("Use letters, digits, - and / only.", "Utilise seulement des lettres, chiffres, - et /."));
         if (ctx.world.worktrees.some((w) => w.name === name)) fail(`error: worktree '${name}' already exists`, tx("Pick another name, or remove the old one with orca worktree rm.", "Choisis un autre nom, ou supprime l'ancien avec orca worktree rm."));
-        if (agent !== undefined && !TOOLS.includes(agent as ToolId)) fail(`error: unknown agent '${agent}'. Known: claude, codex, gemini`);
+        if (agent !== undefined && !TOOLS.includes(agent as ToolId)) fail(`error: unknown agent '${agent}'. Known: ${TOOLS.join(", ")}`);
         if (base !== undefined && base !== "main") fail(`error: base branch '${base}' not found`, tx("In this sandbox every worktree starts from main.", "Dans ce bac à sable, chaque worktree part de main."));
-        const files = projectFiles(ctx.world.files);
-        const wt: Worktree = { name, branch: name, agent: (agent as ToolId) ?? null, status: "todo", comment: "", base: files, files: { ...files }, runs: [], merged: false, log: [] };
-        ctx.world.worktrees = [...ctx.world.worktrees, wt];
+        const wt = addWorktree(ctx, name, (agent as ToolId) ?? null);
         ctx.out(`✓ Created worktree ${name}`, "success");
         ctx.out([`  path:   ~/orca/workspaces/tiny-shop/${name}`, `  branch: ${name} (from main)`], "muted");
         if (wt.agent) ctx.out(`  terminal: ${terminalHandle(wt)} (${TOOL_NAMES[wt.agent]})`, "muted");
-        ctx.emit({ type: "worktree-create", name, agent: wt.agent });
         if (typeof prompt === "string" && prompt.trim()) {
           if (!wt.agent) fail("error: --prompt needs --agent", tx("A prompt goes to an agent: add --agent codex (or claude, gemini).", "Un prompt s'adresse à un agent : ajoute --agent codex (ou claude, gemini)."));
           const run = sendPrompt(ctx, ctx.world.worktrees.find((w) => w.name === name)!, wt.agent, prompt);
@@ -207,7 +227,8 @@ export function gitCommand(ctx: Ctx, argv: string[]): string {
   const [sub, ...rest] = argv;
   const w = ctx.world;
   const files = projectFiles(w.files);
-  const changed = changes(w.git.head, files);
+  // Untracked files that .gitignore lists are invisible to git.
+  const changed = changes(w.git.head, files).filter((p) => !(w.git.head[p] === undefined && gitIgnored(files, p)));
   switch (sub) {
     case "init":
       ctx.out("Reinitialized existing Git repository in ~/project/.git/");
@@ -234,13 +255,37 @@ export function gitCommand(ctx: Ctx, argv: string[]): string {
     }
     case "add":
       return "git add";
+    case "restore":
+    case "checkout": {
+      const paths = rest.filter((a) => !a.startsWith("-") && a !== "--" && a !== "HEAD");
+      if (sub === "checkout" && !rest.includes("--") && paths.length === 1 && !(paths[0] in files) && !(paths[0] in w.git.head))
+        fail(tx(`git checkout ${paths[0]}: switching branches isn't simulated here.`, `git checkout ${paths[0]} : changer de branche n'est pas simulé ici.`), tx("To throw away changes to a file: git restore <file>.", "Pour jeter les changements d'un fichier : git restore <fichier>."));
+      if (!paths.length) fail("fatal: you must specify path(s) to restore", tx("Name the file to put back as it was in the last commit, e.g. git restore tests/cart.test.ts", "Nomme le fichier à remettre comme au dernier commit, ex. git restore tests/cart.test.ts"));
+      const targets = paths.flatMap((p) => (p === "." ? changed : [p.replace(/^\.\//, "")]));
+      for (const p of targets) {
+        if (w.git.head[p] === undefined && files[p] === undefined) fail(`error: pathspec '${p}' did not match any file(s) known to git`);
+        if (w.git.head[p] === undefined) {
+          // A new file: restore leaves it alone in real git; say so.
+          ctx.out(tx(`${p} is new (never committed): delete it with rm if you don't want it.`, `${p} est nouveau (jamais commité) : supprime-le avec rm si tu n'en veux pas.`), "muted");
+          continue;
+        }
+        w.files = { ...w.files, [p]: w.git.head[p] };
+      }
+      ctx.emit({ type: "file-change", paths: targets });
+      return "git restore";
+    }
     case "commit": {
       const mi = rest.findIndex((a) => a === "-m" || a === "-am");
       const message = mi >= 0 ? rest[mi + 1] : undefined;
       if (!message) fail("error: switch `m' requires a value", tx('Add a message: git commit -am "Describe the change"', 'Ajoute un message : git commit -am "Décris le changement"'));
       if (!changed.length) fail("nothing to commit, working tree clean");
       const id = objectId(message + w.seq + JSON.stringify(files)).slice(0, 7);
-      w.git = { ...w.git, head: files, log: [...w.git.log, { id, message }] };
+      const next = { ...w.git.head };
+      for (const p of changed) {
+        if (files[p] === undefined) delete next[p];
+        else next[p] = files[p];
+      }
+      w.git = { ...w.git, head: next, log: [...w.git.log, { id, message }] };
       w.seq += 1;
       ctx.out(`[${w.git.branch} ${id}] ${message}`, "commit");
       ctx.out(` ${changed.length} file${changed.length > 1 ? "s" : ""} changed`, "muted");

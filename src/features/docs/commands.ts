@@ -18,7 +18,7 @@ export interface CommandDoc {
   risk: Risk;
   riskNote?: Txt;
   /** Which tools it belongs to (for the badges). */
-  tools?: Array<"claude" | "codex" | "gemini" | "antigravity" | "orca">;
+  tools?: Array<"claude" | "codex" | "gemini" | "antigravity" | "cursor" | "orca">;
   /** Interactive before/after demo: setup commands on the Tiny Shop project, then the demonstrated command. */
   demo: { setup: string[]; command: string };
 }
@@ -69,7 +69,10 @@ export const COMMAND_DOCS: CommandDoc[] = [
     category: "agents",
     tools: ["gemini"],
     summary: L("Start Gemini CLI", "Lancer Gemini CLI"),
-    plain: L("Google's open-source agent for the terminal. Its rules file is GEMINI.md, which can import other files with @path.", "L'agent open source de Google pour le terminal. Son fichier de règles est GEMINI.md, qui peut importer d'autres fichiers avec @chemin."),
+    plain: L(
+      "Google's open-source agent for the terminal. Its rules file is GEMINI.md, which can import other files with @path. Since June 18, 2026 it serves Gemini Code Assist and paid API or Vertex AI keys; personal Google accounts use the Antigravity CLI, agy.",
+      "L'agent open source de Google pour le terminal. Son fichier de règles est GEMINI.md, qui peut importer d'autres fichiers avec @chemin. Depuis le 18 juin 2026, il sert Gemini Code Assist et les clés payantes API ou Vertex AI ; les comptes Google personnels utilisent Antigravity CLI, agy.",
+    ),
     syntax: ["gemini", 'gemini -p "request"'],
     flags: [{ flag: "-p, --prompt", desc: L("Answer once and exit", "Répondre une fois et quitter") }],
     risk: "careful",
@@ -80,10 +83,17 @@ export const COMMAND_DOCS: CommandDoc[] = [
     name: "antigravity",
     category: "agents",
     tools: ["antigravity"],
-    summary: L("Open Antigravity's Agent Manager", "Ouvrir l'Agent Manager d'Antigravity"),
-    plain: L("Google's agent-first IDE. Its customizations live in .agents/: rules/, skills/ and workflows/. Here it's simulated as a chat in the terminal.", "L'IDE « agent d'abord » de Google. Ses personnalisations vivent dans .agents/ : rules/, skills/ et workflows/. Ici, il est simulé comme un chat dans le terminal."),
-    syntax: ["antigravity", "/<workflow>", "/plan"],
-    flags: [{ flag: "/plan", desc: L("Switch Planning / Fast mode", "Basculer mode Planning / Fast") }],
+    summary: L("Start Antigravity (agy)", "Lancer Antigravity (agy)"),
+    plain: L(
+      "Google's agent, as a desktop IDE with an Agent Manager and as a terminal CLI, agy. Both read .agents/ (rules/, skills/, workflows/), AGENTS.md and GEMINI.md. Here it's simulated as a chat in the terminal; antigravity and agy both open it.",
+      "L'agent de Google, en IDE de bureau avec un Agent Manager et en CLI de terminal, agy. Les deux lisent .agents/ (rules/, skills/, workflows/), AGENTS.md et GEMINI.md. Ici, il est simulé comme un chat dans le terminal ; antigravity et agy l'ouvrent tous les deux.",
+    ),
+    syntax: ["agy", 'agy -p "request"', 'agy -i "request"', "/<workflow>", "/plan"],
+    flags: [
+      { flag: "-p", desc: L("Answer once and exit", "Répondre une fois et quitter") },
+      { flag: "-i", desc: L("Start a session with a first request", "Ouvrir une session avec une première demande") },
+      { flag: "/plan", desc: L("Switch Planning / Fast mode", "Basculer mode Planning / Fast") },
+    ],
     risk: "careful",
     demo: { setup: [], command: "antigravity" },
   },
@@ -326,7 +336,188 @@ export const COMMAND_DOCS: CommandDoc[] = [
     riskNote: L("Review the diff before merging an agent's work.", "Relis le diff avant de fusionner le travail d'un agent."),
     demo: { setup: [`orca worktree create --name fix-total --agent codex --prompt "${PROMPT}"`], command: "git merge fix-total" },
   },
+  {
+    id: "orca-orchestration",
+    name: "orca orchestration",
+    category: "orca",
+    tools: ["orca"],
+    summary: L("A coordinator with tasks and workers", "Un coordinateur avec des tâches et des workers"),
+    plain: L(
+      "You become the coordinator: create a Run with an objective, split it into tasks (some can wait for others), start one worker agent per task, and read their reports in your inbox.",
+      "Tu deviens le coordinateur : tu crées un Run avec un objectif, tu le découpes en tâches (certaines peuvent attendre les autres), tu lances un agent worker par tâche et tu lis leurs comptes rendus dans ta boîte.",
+    ),
+    syntax: [
+      'orca orchestration run-create --objective "…"',
+      'orca orchestration task-create --spec "…" [--deps \'["task_1"]\']',
+      "orca orchestration worker-start --task task_1 --agent claude",
+      "orca orchestration check",
+    ],
+    flags: [
+      { flag: "--spec", desc: L("The worker's whole brief: write it like a complete prompt", "Tout le brief du worker : écris-le comme un prompt complet") },
+      { flag: "--deps", desc: L("Tasks that must be completed first (JSON list)", "Tâches à terminer d'abord (liste JSON)") },
+      { flag: "--agent", desc: L("Who does the task", "Qui fait la tâche") },
+    ],
+    risk: "safe",
+    demo: { setup: ['orca orchestration run-create --objective "Fix the cart"', `orca orchestration task-create --spec "${PROMPT}"`], command: "orca orchestration worker-start --task task_1 --agent claude" },
+  },
+  {
+    id: "orca-automations",
+    name: "orca automations",
+    category: "orca",
+    tools: ["orca"],
+    summary: L("Run a prompt on a schedule", "Lancer un prompt selon un horaire"),
+    plain: L(
+      "An agent runs your prompt every day, on weekdays or on a cron schedule, in a fresh worktree. Nobody is there to answer its questions, so the prompt must say everything.",
+      "Un agent lance ton prompt chaque jour, en semaine ou selon un cron, dans un worktree neuf. Personne n'est là pour répondre à ses questions : le prompt doit tout dire.",
+    ),
+    syntax: ['orca automations create --name "…" --trigger weekdays --time 09:00 --prompt "…" --provider claude --repo path:~/project --disabled', "orca automations run <id>", "orca automations edit <id> --enabled"],
+    flags: [
+      { flag: "--trigger", desc: L("hourly · daily · weekdays · weekly · a cron", "hourly · daily · weekdays · weekly · un cron") },
+      { flag: "--time", desc: L("HH:MM, for daily, weekdays and weekly", "HH:MM, pour daily, weekdays et weekly") },
+      { flag: "--disabled", desc: L("Create it switched off while you test it", "La créer désactivée le temps de la tester") },
+    ],
+    risk: "careful",
+    riskNote: L("It acts while you're away: test it with run before enabling it.", "Elle agit pendant ton absence : teste-la avec run avant de l'activer."),
+    demo: {
+      setup: [`orca automations create --name "Nightly fix" --trigger daily --time 02:00 --prompt "${PROMPT}" --provider claude --repo path:~/project --disabled`],
+      command: "orca automations run auto_1",
+    },
+  },
 ];
+
+COMMAND_DOCS.splice(
+  COMMAND_DOCS.findIndex((d) => d.id === "antigravity") + 1,
+  0,
+  {
+    id: "cursor-agent",
+    name: "cursor-agent",
+    category: "agents",
+    tools: ["cursor"],
+    summary: L("Start Cursor's agent in the terminal", "Lancer l'agent de Cursor dans le terminal"),
+    plain: L(
+      "The agent from the Cursor editor, as a command-line tool. It reads AGENTS.md and the rules in .cursor/rules/*.mdc.",
+      "L'agent de l'éditeur Cursor, en ligne de commande. Il lit AGENTS.md et les règles de .cursor/rules/*.mdc.",
+    ),
+    syntax: ["cursor-agent", 'cursor-agent "first request"', 'cursor-agent -p "request"'],
+    flags: [
+      { flag: "-p, --print", desc: L("Answer once and exit", "Répondre une fois et quitter") },
+      { flag: "--force", desc: L("Run commands without asking (risky)", "Lancer des commandes sans demander (risqué)") },
+    ],
+    risk: "careful",
+    riskNote: L("--force removes the approval step: keep it for throwaway environments.", "--force supprime l'étape d'approbation : garde-le pour des environnements jetables."),
+    demo: { setup: ['echo "- Test: \`pnpm test\` (run it after every change)" > AGENTS.md'], command: `cursor-agent -p "${PROMPT}"` },
+  },
+);
+
+COMMAND_DOCS.splice(
+  COMMAND_DOCS.findIndex((d) => d.id === "exit"),
+  0,
+  {
+    id: "rewind",
+    name: "/rewind",
+    category: "session",
+    tools: ["claude"],
+    summary: L("Undo the agent's last changes", "Annuler les derniers changements de l'agent"),
+    plain: L(
+      "Claude Code keeps a checkpoint before each change. /rewind (or Esc twice) puts the code and the conversation back to before the last request, so you can ask again, better.",
+      "Claude Code garde un point de reprise avant chaque changement. /rewind (ou deux fois Échap) remet le code et la conversation comme avant la dernière demande, pour redemander, mieux.",
+    ),
+    syntax: ["/rewind"],
+    flags: [],
+    risk: "safe",
+    demo: { setup: ['claude "add a discount"'], command: "/rewind" },
+  },
+  {
+    id: "memory-add",
+    name: "/memory add",
+    category: "session",
+    tools: ["gemini"],
+    summary: L("Make Gemini CLI remember a fact", "Faire retenir un fait à Gemini CLI"),
+    plain: L("Saves a line in ~/.gemini/GEMINI.md, so every session in every project knows it.", "Enregistre une ligne dans ~/.gemini/GEMINI.md, pour que toutes les sessions de tous les projets la connaissent."),
+    syntax: ['/memory add "I prefer pnpm over npm"', "/memory show"],
+    flags: [],
+    risk: "safe",
+    demo: { setup: ["gemini"], command: '/memory add "I prefer pnpm over npm"' },
+  },
+);
+
+COMMAND_DOCS.push(
+  {
+    id: "claude-settings",
+    name: ".claude/settings.json",
+    category: "config",
+    tools: ["claude"],
+    summary: L("Permissions and hooks for Claude Code", "Permissions et hooks pour Claude Code"),
+    plain: L(
+      "Team settings that the model can't ignore: deny rules (never read .env, never run curl) and hooks (run the tests after every edit).",
+      "Des réglages d'équipe que le modèle ne peut pas ignorer : des règles deny (ne jamais lire .env, ne jamais lancer curl) et des hooks (lancer les tests après chaque modification).",
+    ),
+    syntax: ['{ "permissions": { "deny": ["Read(./.env)", "Bash(curl:*)"] } }', '{ "hooks": { "PostToolUse": [{ "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "pnpm test" }] }] } }', "/permissions · /hooks"],
+    flags: [],
+    risk: "safe",
+    demo: { setup: [], command: `echo '{ "permissions": { "deny": ["Read(./.env)"] } }' > .claude/settings.json` },
+  },
+  {
+    id: "subagents",
+    name: ".claude/agents/<name>.md",
+    category: "files",
+    tools: ["claude"],
+    summary: L("A specialist with its own context", "Un spécialiste avec son propre contexte"),
+    plain: L(
+      "A subagent works in its own context window with the tools you allow, and only sends a short summary back. Great for reviews and research that would fill the main conversation.",
+      "Un sous-agent travaille dans sa propre fenêtre de contexte avec les outils que tu autorises, et ne renvoie qu'un court résumé. Idéal pour les relectures et les recherches qui rempliraient la conversation principale.",
+    ),
+    syntax: ["---\nname: reviewer\ndescription: Reviews code for bugs. Use after code changes.\ntools: Read, Grep, Glob\n---", "/agents"],
+    flags: [],
+    risk: "safe",
+    demo: {
+      setup: ['printf "---\\nname: reviewer\\ndescription: Reviews code for bugs. Use after code changes.\\ntools: Read, Grep, Glob\\n---\\nYou review code.\\n" > .claude/agents/reviewer.md'],
+      command: 'claude -p "Use the reviewer subagent to review the code for bugs"',
+    },
+  },
+  {
+    id: "cursor-rules",
+    name: ".cursor/rules/*.mdc",
+    category: "files",
+    tools: ["cursor"],
+    summary: L("Cursor's project rules", "Les règles de projet de Cursor"),
+    plain: L(
+      "One rule per file. The header decides when it applies: always (alwaysApply), for matching files (globs), when relevant (description), or only when you mention it (@rule).",
+      "Une règle par fichier. L'en-tête décide quand elle s'applique : toujours (alwaysApply), pour certains fichiers (globs), quand c'est utile (description), ou seulement quand tu la cites (@règle).",
+    ),
+    syntax: ["---\ndescription: …\nglobs: tests/**/*.test.ts\nalwaysApply: false\n---"],
+    flags: [],
+    risk: "safe",
+    demo: { setup: ['printf "---\\nalwaysApply: true\\n---\\nUse pnpm.\\n" > .cursor/rules/pnpm.mdc'], command: `cursor-agent -p "${PROMPT}"` },
+  },
+  {
+    id: "gemini-commands",
+    name: ".gemini/commands/*.toml",
+    category: "files",
+    tools: ["gemini"],
+    summary: L("Your own slash commands in Gemini CLI", "Tes propres commandes / dans Gemini CLI"),
+    plain: L("A TOML file with a description and a prompt. {{args}} is replaced by what you type after /name.", "Un fichier TOML avec une description et un prompt. {{args}} est remplacé par ce que tu tapes après /nom."),
+    syntax: ['description = "Fix a bug with a test"\nprompt = """Fix the bug in {{args}}. Add a test and run the tests."""'],
+    flags: [],
+    risk: "safe",
+    demo: {
+      setup: ["printf 'description = \"Fix a bug\"\\nprompt = \"Fix the bug in {{args}}. Add a test and run the tests.\"\\n' > .gemini/commands/fix.toml", "gemini"],
+      command: "/fix @src/cart.ts total ignores quantity",
+    },
+  },
+  {
+    id: "git-restore",
+    name: "git restore <file>",
+    category: "orca",
+    summary: L("Throw away changes to a file", "Jeter les changements d'un fichier"),
+    plain: L("Puts a file back as it was in the last commit. Use it when an agent changed something it shouldn't have.", "Remet un fichier comme au dernier commit. Utile quand un agent a modifié quelque chose qu'il n'aurait pas dû."),
+    syntax: ["git restore <file>", "git diff <file>"],
+    flags: [],
+    risk: "destructive",
+    riskNote: L("The changes are gone for good: check git diff first.", "Les changements sont perdus pour de bon : regarde git diff avant."),
+    demo: { setup: ['echo "oops" > tests/cart.test.ts'], command: "git restore tests/cart.test.ts" },
+  },
+);
 
 export const CATEGORIES: Category[] = ["agents", "session", "files", "config", "orca"];
 
@@ -348,6 +539,27 @@ export interface Token {
 
 const WORDS: Record<string, Txt> = {
   claude: L("Claude Code, Anthropic's agent", "Claude Code, l'agent d'Anthropic"),
+  "cursor-agent": L("Cursor's agent", "l'agent de Cursor"),
+  agy: L("Antigravity CLI", "Antigravity CLI"),
+  orchestration: L("coordinator and workers", "coordinateur et workers"),
+  automations: L("prompts on a schedule", "prompts planifiés"),
+  "run-create": L("start a Run", "démarrer un Run"),
+  "task-create": L("add a task", "ajouter une tâche"),
+  "worker-start": L("start a worker on a task", "lancer un worker sur une tâche"),
+  check: L("read your inbox", "lire ta boîte"),
+  restore: L("undo changes to a file", "annuler les changements d'un fichier"),
+  "--objective": L("what the run should achieve", "ce que le run doit accomplir"),
+  "--spec": L("the task's brief", "le brief de la tâche"),
+  "--deps": L("tasks to finish first", "tâches à finir d'abord"),
+  "--task": L("which task", "quelle tâche"),
+  "--trigger": L("when it runs", "quand elle tourne"),
+  "--time": L("at what time", "à quelle heure"),
+  "--provider": L("which agent", "quel agent"),
+  "--repo": L("which project", "quel projet"),
+  "--disabled": L("created switched off", "créée désactivée"),
+  "--force": L("no approvals (risky)", "sans approbation (risqué)"),
+  "--dangerously-skip-permissions": L("no approvals at all (risky)", "aucune approbation (risqué)"),
+  "--yolo": L("no approvals at all (risky)", "aucune approbation (risqué)"),
   codex: L("Codex, OpenAI's agent", "Codex, l'agent d'OpenAI"),
   gemini: L("Gemini CLI, Google's agent", "Gemini CLI, l'agent de Google"),
   antigravity: L("Antigravity's Agent Manager", "l'Agent Manager d'Antigravity"),
@@ -392,7 +604,7 @@ export function explainTokens(input: string, locale: Locale): Token[] {
   const out: Token[] = [];
   const re = /"[^"]*"|'[^']*'|\S+/g;
   const words = input.match(re) ?? [];
-  if (words.length && !/^(claude|codex|gemini|antigravity|orca|git|cat|echo|printf|cp|rm|ls|tree|pnpm|npm|\/)/.test(words[0] ?? ""))
+  if (words.length && !/^(claude|codex|gemini|antigravity|agy|cursor-agent|orca|git|cat|echo|printf|cp|rm|ls|tree|pnpm|npm|\/)/.test(words[0] ?? ""))
     return [{ text: input, kind: "prompt", meaning: locale === "fr" ? "une demande en langage naturel, pour l'agent" : "a plain-language request for the agent" }];
   words.forEach((w, i) => {
     const known = WORDS[w];

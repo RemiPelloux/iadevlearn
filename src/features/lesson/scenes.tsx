@@ -11,6 +11,7 @@ import { AGENTS_MD, CHANGELOG_SKILL, P_DISCOUNT, P_EURO, P_TOTAL, shop } from "@
 import { AgentView, ToolBadge, useCheckLabel } from "@/features/lab/agent-view";
 import { Button } from "@/components/ui/button";
 import { useL, useLocale, usePick } from "@/i18n";
+import { StoryScene } from "./scenes-more";
 
 export function Scene({ id }: { id: SceneId }) {
   const l = useL();
@@ -83,7 +84,7 @@ export function Scene({ id }: { id: SceneId }) {
         />
       );
     default:
-      return null;
+      return id.startsWith("story:") ? <StoryScene id={id.slice(6)} /> : null;
   }
 }
 

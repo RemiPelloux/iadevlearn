@@ -18,6 +18,7 @@ export const TOOL_TINT: Record<ToolId, string> = {
   codex: "#86b6dd",
   gemini: "#a9d07b",
   antigravity: "#d397c8",
+  cursor: "#f0c060",
 };
 
 export const LINE_CLS: Record<OutLine["kind"], string> = {

@@ -410,6 +410,10 @@ mkdir -p .agents/skills
 cp -r .claude/skills/changelog .agents/skills/
 \`\`\`
 
+## Ready-made skills
+
+The [skills hub](/skills) lists ready-to-use skills: some written for this course, Remi Pelloux's guidelines and kill-my-idea, Anthropic's official skills and popular community ones. Each has its install command, and most show their whole SKILL.md, so you can read one before you install it.
+
 ## Rules or skill?
 
 Rules hold what's always true for the project. A skill holds how to do one specific job. "We use pnpm" is a rule. "How we write release notes" is a skill.`,
@@ -451,6 +455,10 @@ Le format est le même partout, donc un skill marche dans plusieurs outils :
 mkdir -p .agents/skills
 cp -r .claude/skills/changelog .agents/skills/
 \`\`\`
+
+## Des skills tout faits
+
+La [bibliothèque de skills](/skills) liste des skills prêts à l'emploi : certains écrits pour ce cours, les règles de Remi Pelloux et kill-my-idea, les skills officiels d'Anthropic et des skills populaires de la communauté. Chacun a sa commande d'installation, et la plupart montrent tout leur SKILL.md, pour que tu puisses le lire avant de l'installer.
 
 ## Règle ou skill ?
 

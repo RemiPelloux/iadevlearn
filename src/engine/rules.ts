@@ -9,12 +9,21 @@ export const RULE_FILES: Record<ToolId, string[]> = {
   claude: ["~/.claude/CLAUDE.md", "CLAUDE.md", ".claude/CLAUDE.md", "CLAUDE.local.md"],
   codex: ["~/.codex/AGENTS.md", "AGENTS.md"],
   gemini: ["~/.gemini/GEMINI.md", "GEMINI.md"],
-  antigravity: ["~/.gemini/GEMINI.md", "GEMINI.md", "AGENTS.md"],
+  antigravity: ["~/.gemini/GEMINI.md", "~/.gemini/AGENTS.md", "~/.gemini/config/GEMINI.md", "~/.gemini/config/AGENTS.md", "GEMINI.md", "AGENTS.md"],
+  cursor: ["AGENTS.md"],
+};
+
+/** Rules files that apply to one folder only, when the agent works on files inside it. */
+export const FOLDER_RULE_FILE: Partial<Record<ToolId, string>> = {
+  claude: "CLAUDE.md",
+  codex: "AGENTS.md",
+  gemini: "GEMINI.md",
+  cursor: "AGENTS.md",
 };
 
 /** Folders of individual rule files (one level deep). */
 export const RULE_DIRS: Partial<Record<ToolId, string[]>> = {
-  antigravity: [".agents/rules", ".agent/rules"],
+  antigravity: ["~/.gemini/config/rules", ".agents/rules", ".agent/rules"],
 };
 
 export const TOOL_NAMES: Record<ToolId, string> = {
@@ -22,6 +31,7 @@ export const TOOL_NAMES: Record<ToolId, string> = {
   codex: "Codex",
   gemini: "Gemini CLI",
   antigravity: "Antigravity",
+  cursor: "Cursor",
 };
 
 /** The rules file `/init` creates for each tool. */
@@ -30,6 +40,7 @@ export const INIT_FILE: Record<ToolId, string> = {
   codex: "AGENTS.md",
   gemini: "GEMINI.md",
   antigravity: ".agents/rules/project.md",
+  cursor: "AGENTS.md",
 };
 
 export const isRulesPath = (p: string) =>
@@ -40,10 +51,68 @@ export interface LoadedRule {
   content: string;
   /** Pulled in by an `@path` import line in another rules file. */
   importedBy?: string;
+  /** Why it was loaded, when it isn't loaded every time: "folder", "globs", "requested", "manual". */
+  scope?: "folder" | "globs" | "requested" | "manual";
 }
 
+export interface RuleOpts {
+  /** Files the agent reads or edits in this turn (folder rules and Cursor globs depend on them). */
+  touched?: string[];
+  /** The request (Cursor "agent requested" and manual @rule rules depend on it). */
+  prompt?: string;
+}
+
+/** Glob → RegExp for rule globs: `**` any folders, `*` any characters but "/". */
+export function globToRegex(glob: string): RegExp {
+  let re = "";
+  for (let i = 0; i < glob.length; i++) {
+    const ch = glob[i];
+    if (ch === "*" && glob[i + 1] === "*") {
+      re += glob[i + 2] === "/" ? "(?:.*/)?" : ".*";
+      i += glob[i + 2] === "/" ? 2 : 1;
+    } else if (ch === "*") re += "[^/]*";
+    else if (ch === "?") re += "[^/]";
+    else if (ch === "{") {
+      const end = glob.indexOf("}", i);
+      re += "(?:" + glob.slice(i + 1, end).split(",").map((x) => x.replace(/[.+^$()|[\]\\]/g, "\\$&")).join("|") + ")";
+      i = end;
+    } else re += ch.replace(/[.+^$()|[\]\\]/g, "\\$&");
+  }
+  return new RegExp(`^${re}$`);
+}
+
+/** A Cursor rule (.cursor/rules/*.mdc): its frontmatter decides when it applies. */
+export function cursorRuleMode(text: string): { mode: "always" | "globs" | "requested" | "manual"; globs: string[]; description: string } {
+  const m = text.match(/^---\s*\n([\s\S]*?)\n---/);
+  const data: Record<string, string> = {};
+  for (const line of (m?.[1] ?? "").split("\n")) {
+    const kv = line.match(/^([\w-]+):\s*(.*)$/);
+    if (kv) data[kv[1]] = kv[2].trim();
+  }
+  const globs = (data.globs ?? "")
+    .replace(/^\[|\]$/g, "")
+    .split(",")
+    .map((g) => g.trim().replace(/^["']|["']$/g, ""))
+    .filter(Boolean);
+  const description = (data.description ?? "").replace(/^["']|["']$/g, "");
+  if (/^true$/i.test(data.alwaysApply ?? "")) return { mode: "always", globs, description };
+  if (globs.length) return { mode: "globs", globs, description };
+  if (description) return { mode: "requested", globs, description };
+  return { mode: "manual", globs, description };
+}
+
+const keywords = (s: string) =>
+  new Set(
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length >= 4 && !["when", "with", "this", "that", "your", "use", "quand", "pour", "avec", "dans"].includes(w)),
+  );
+
 /** The rule files a tool would read right now, imports included (`@path` lines in CLAUDE.md and GEMINI.md). */
-export function loadRules(files: FileMap, tool: ToolId): LoadedRule[] {
+export function loadRules(files: FileMap, tool: ToolId, opts: RuleOpts = {}): LoadedRule[] {
   const out: LoadedRule[] = [];
   const seen = new Set<string>();
   const add = (path: string, importedBy?: string, depth = 0) => {
@@ -57,6 +126,41 @@ export function loadRules(files: FileMap, tool: ToolId): LoadedRule[] {
   for (const dir of RULE_DIRS[tool] ?? [])
     for (const p of Object.keys(files).sort())
       if (p.startsWith(dir + "/") && !p.slice(dir.length + 1).includes("/") && p.endsWith(".md")) add(p);
+
+  // Folder rules: src/CLAUDE.md only matters when the agent works in src/. Gemini CLI scans subfolders up front.
+  const folderFile = FOLDER_RULE_FILE[tool];
+  const touched = opts.touched ?? [];
+  if (folderFile)
+    for (const p of Object.keys(files).sort()) {
+      if (p.startsWith("~/") || !p.endsWith("/" + folderFile)) continue;
+      const dir = p.slice(0, -folderFile.length);
+      if (tool === "gemini" || touched.some((t) => t.startsWith(dir))) {
+        const before = out.length;
+        add(p);
+        if (out.length > before) out[out.length - 1].scope = "folder";
+      }
+    }
+
+  // Cursor project rules: always, auto-attached by globs, requested by description, or manual (@rule-name).
+  if (tool === "cursor") {
+    const words = keywords(opts.prompt ?? "");
+    for (const p of Object.keys(files).sort()) {
+      const m = p.match(/^\.cursor\/rules\/([^/]+)\.mdc$/);
+      if (!m) continue;
+      const rule = cursorRuleMode(files[p]);
+      const include =
+        rule.mode === "always"
+          ? true
+          : rule.mode === "globs"
+            ? touched.some((t) => rule.globs.some((g) => globToRegex(g).test(t)))
+            : rule.mode === "requested"
+              ? [...keywords(rule.description)].some((w) => words.has(w))
+              : new RegExp(`@${m[1]}\\b`).test(opts.prompt ?? "");
+      if (!include || seen.has(p)) continue;
+      seen.add(p);
+      out.push({ path: p, content: files[p].replace(/^---[\s\S]*?\n---\s*\n?/, ""), scope: rule.mode === "always" ? undefined : rule.mode });
+    }
+  }
   return out;
 }
 
@@ -74,7 +178,9 @@ export const DIRECTIVES: DirectiveDef[] = [
   {
     id: "tests",
     label: tx("Run the tests after every change", "Lancer les tests après chaque changement"),
-    test: (s) => /\b(run|lance[rz]?|ex[ée]cute[rz]?)\b[^.\n]{0,40}\btests?\b/i.test(s) || /\btests?\b[^.\n]{0,40}\b(after|before|pass|passer|apr[èe]s|avant)\b/i.test(s),
+    test: (s) =>
+      /\b(run|lance[rz]?|ex[ée]cute[rz]?)\b[^.\n]{0,40}\btests?\b/i.test(s) ||
+      /\btests?\b[^.\n]{0,40}\b(after (every|each|any|a) (change|edit|modification)|before (you )?(commit|push|merg)\w*|must pass|pass\b|passer|apr[èe]s (chaque|tout) (changement|modification)|avant (de )?(commit|push|fusion)\w*)/i.test(s),
   },
   { id: "lang:fr", label: tx("Write comments in French", "Commentaires en français"), test: (s) => /\b(french|fran[çc]ais)\b/i.test(s) },
   { id: "conventional", label: tx("Conventional Commits messages", "Messages Conventional Commits"), test: (s) => /conventional commits|\bfeat:|\bfix:/i.test(s) },

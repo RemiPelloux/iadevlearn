@@ -1,7 +1,7 @@
 "use client";
 
 import { clsx } from "clsx";
-import { BookOpenCheck, FileDiff, Sparkles, SquareTerminal, TriangleAlert, Workflow } from "lucide-react";
+import { BookOpenCheck, Bot, FileDiff, KeyRound, Plug, ShieldAlert, Sparkles, SquareTerminal, TriangleAlert, Webhook, Workflow, XCircle } from "lucide-react";
 import { DIRECTIVES, TOOL_NAMES } from "@/engine";
 import { useL, usePick } from "@/i18n";
 import { KIND_COLOR, OUTCOME_CLS, PromptMeter, ToolBadge, useCheckLabel, useKindLabel, useOutcomeLabel } from "./agent-view";
@@ -67,6 +67,57 @@ export function RunPanel({ onOpenFile }: { onOpenFile?: (path: string) => void }
               <li key={a} className="rounded-md bg-warn-soft px-2 py-1 text-xs text-fg">
                 <span className="font-semibold text-warn">{checkLabel(a)}</span>{l(": ", " : ")}{l("your prompt (and your rules) didn't say it. See the yellow line in the terminal.", "ton prompt (et tes règles) ne le disaient pas. Vois la ligne jaune dans le terminal.")}
               </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      {run.injection && (
+        <Section icon={<ShieldAlert className={clsx("size-3.5", run.injection.outcome === "ran" ? "text-bad" : "text-ok")} />} title={l("Prompt injection", "Injection de prompt")}>
+          <p className={clsx("rounded-md px-2 py-1 text-xs", run.injection.outcome === "ran" ? "bg-bad-soft text-fg" : "bg-ok-soft text-fg")}>
+            {run.injection.outcome === "ran"
+              ? l(`${run.injection.path} told the agent to run \`${run.injection.command}\`, and it did: nothing was set up to stop it.`, `${run.injection.path} a demandé à l'agent de lancer \`${run.injection.command}\`, et il l'a fait : rien n'était prévu pour l'en empêcher.`)
+              : run.injection.outcome === "blocked"
+                ? l(`${run.injection.path} hid an order (\`${run.injection.command}\`). Your deny rule blocked it.`, `${run.injection.path} cachait un ordre (\`${run.injection.command}\`). Ta règle deny l'a bloqué.`)
+                : l(`${run.injection.path} hid an order (\`${run.injection.command}\`). The agent refused: it came from a file, not from you.`, `${run.injection.path} cachait un ordre (\`${run.injection.command}\`). L'agent a refusé : ça venait d'un fichier, pas de toi.`)}
+          </p>
+        </Section>
+      )}
+
+      {!!run.secrets?.length && (
+        <Section icon={<KeyRound className="size-3.5 text-bad" />} title={l("Secrets in the context", "Secrets dans le contexte")}>
+          <p className="rounded-md bg-bad-soft px-2 py-1 text-xs text-fg">
+            {l(`${run.secrets.join(", ")} was read: its keys were sent to the model provider. A deny rule in .claude/settings.json prevents this.`, `${run.secrets.join(", ")} a été lu : ses clés ont été envoyées au fournisseur du modèle. Une règle deny dans .claude/settings.json l'évite.`)}
+          </p>
+        </Section>
+      )}
+
+      {!!run.failing && (
+        <Section icon={<XCircle className="size-3.5 text-bad" />} title={l("Tests", "Tests")}>
+          <p className="text-xs text-bad">{l(`${run.failing} test${run.failing > 1 ? "s" : ""} still failing after this run.`, `${run.failing} test${run.failing > 1 ? "s" : ""} échoue${run.failing > 1 ? "nt" : ""} encore après cette exécution.`)}</p>
+        </Section>
+      )}
+
+      {run.subagent && (
+        <Section icon={<Bot className="size-3.5 text-[var(--lane-5)]" />} title={l("Delegated to a subagent", "Délégué à un sous-agent")}>
+          <p className="text-xs text-fg-2">
+            <span className="font-mono text-fg">{run.subagent.name}</span>{" "}
+            {l(`used ≈${run.subagent.tokens.toLocaleString("en")} tokens in its own context. Only its summary came back here.`, `a utilisé ≈${run.subagent.tokens.toLocaleString("fr")} tokens dans son propre contexte. Seul son résumé est revenu ici.`)}
+          </p>
+        </Section>
+      )}
+
+      {!!run.mcpUsed?.length && (
+        <Section icon={<Plug className="size-3.5 text-[var(--lane-3)]" />} title={l("MCP tools called", "Outils MCP appelés")}>
+          <p className="font-mono text-xs">{run.mcpUsed.join(", ")}</p>
+        </Section>
+      )}
+
+      {!!run.hooks?.length && (
+        <Section icon={<Webhook className="size-3.5 text-info" />} title={l("Hooks that ran", "Hooks lancés")}>
+          <ul className="space-y-0.5 font-mono text-xs">
+            {run.hooks.map((h, i) => (
+              <li key={i}>$ {h}</li>
             ))}
           </ul>
         </Section>

@@ -105,6 +105,7 @@ export const antigravityWorkflows: LessonDef = {
     L("Antigravity keeps its customizations in .agents/: rules/ (always on), skills/ (picked by the agent), workflows/ (run by you with /name).", "Antigravity range ses personnalisations dans .agents/ : rules/ (toujours actives), skills/ (choisis par l'agent), workflows/ (lancés par toi avec /nom)."),
     L("It also reads AGENTS.md and GEMINI.md, and global rules in ~/.gemini/GEMINI.md.", "Il lit aussi AGENTS.md et GEMINI.md, et les règles globales dans ~/.gemini/GEMINI.md."),
     L("Use a workflow for a procedure you start on purpose (release, deploy); a skill for know-how the agent should apply whenever it fits.", "Utilise un workflow pour une procédure que tu lances exprès (release, déploiement) ; un skill pour un savoir-faire que l'agent applique dès qu'il convient."),
+    L("Heads-up: Antigravity's docs now mark workflows as deprecated and suggest turning them into skills. You'll still meet them in many projects, and the idea (a procedure you start with /name) carries over.", "À savoir : la doc d'Antigravity marque maintenant les workflows comme obsolètes et conseille d'en faire des skills. Tu en croiseras encore dans beaucoup de projets, et l'idée (une procédure lancée avec /nom) reste la même."),
   ],
   steps: [
     {
@@ -127,7 +128,7 @@ export const antigravityWorkflows: LessonDef = {
     {
       kind: "try",
       title: L("Write a workflow", "Écris un workflow"),
-      body: L("A workflow is a Markdown file in .agents/workflows/; its name becomes a slash command. Create release.md (button), then read it in the Files panel.", "Un workflow est un fichier Markdown dans .agents/workflows/ ; son nom devient une commande slash. Crée release.md (bouton), puis lis-le dans le panneau Fichiers."),
+      body: L("A workflow is a Markdown file in .agents/workflows/; its name becomes a slash command. Create release.md (button), then read it in the Files panel. (Newer Antigravity versions prefer skills for this, but workflows still work.)", "Un workflow est un fichier Markdown dans .agents/workflows/ ; son nom devient une commande slash. Crée release.md (bouton), puis lis-le dans le panneau Fichiers. (Les versions récentes d'Antigravity préfèrent les skills pour ça, mais les workflows marchent encore.)"),
       action: { label: L("Create .agents/workflows/release.md", "Créer .agents/workflows/release.md"), kind: "create-file", path: ".agents/workflows/release.md", content: RELEASE_WORKFLOW },
       check: (w) => c.workflows(w).some((x) => x.name === "release"),
       success: L("Type /help in Antigravity: /release is now listed.", "Tape /help dans Antigravity : /release est maintenant listé."),

@@ -5,7 +5,9 @@ import type { FileMap, ToolId } from "./types";
 export const SKILL_DIRS: Partial<Record<ToolId, string[]>> = {
   claude: [".claude/skills", "~/.claude/skills"],
   codex: [".agents/skills", "~/.agents/skills"],
-  antigravity: [".agents/skills", "~/.gemini/antigravity/skills"],
+  // Antigravity: the project's .agents/skills (or legacy .agent/), then your personal skills.
+  // ~/.gemini/antigravity-cli/skills and ~/.gemini/skills are read by the CLI (agy) only.
+  antigravity: [".agents/skills", ".agent/skills", "~/.gemini/antigravity-cli/skills", "~/.gemini/skills", "~/.gemini/config/skills"],
 };
 
 export const WORKFLOW_DIRS: Partial<Record<ToolId, string[]>> = {

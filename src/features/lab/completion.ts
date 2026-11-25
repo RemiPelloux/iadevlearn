@@ -8,34 +8,44 @@ export interface Completion {
   detail?: string;
 }
 
-const PROGRAMS = ["claude", "codex", "gemini", "antigravity", "orca", "git", "ls", "tree", "cat", "edit", "echo", "printf", "cp", "mv", "rm", "touch", "pnpm", "clear", "help"];
+const PROGRAMS = ["claude", "codex", "gemini", "antigravity", "agy", "cursor-agent", "orca", "git", "ls", "tree", "cat", "edit", "echo", "printf", "cp", "mv", "rm", "touch", "pnpm", "clear", "help"];
 
 const SUB: Record<string, string[]> = {
-  claude: ["-p", "--permission-mode", "mcp", "--help"],
+  claude: ["-p", "--permission-mode", "--dangerously-skip-permissions", "mcp", "--help"],
+  "cursor-agent": ["-p", "--force", "--help"],
   codex: ["exec", "--sandbox", "--ask-for-approval", "--full-auto", "mcp", "--help"],
-  gemini: ["-p", "mcp", "--help"],
-  orca: ["worktree", "terminal", "status", "--help"],
+  gemini: ["-p", "--yolo", "mcp", "--help"],
+  orca: ["worktree", "terminal", "orchestration", "automations", "status", "--help"],
+  "orca orchestration": ["run-create", "task-create", "task-list", "worker-start", "check", "task-update", "send"],
+  "orca orchestration run-create": ["--objective"],
+  "orca orchestration task-create": ["--spec", "--task-title", "--deps"],
+  "orca orchestration worker-start": ["--task", "--agent", "--name"],
+  "orca automations": ["create", "list", "show", "run", "runs", "edit", "remove"],
+  "orca automations create": ["--name", "--trigger", "--time", "--prompt", "--provider", "--repo", "--disabled"],
+  "--trigger": ["daily", "weekdays", "weekly", "hourly"],
+  "--provider": ["claude", "codex", "gemini", "cursor"],
   "orca worktree": ["create", "list", "ps", "show", "set", "rm"],
   "orca terminal": ["list", "send", "read", "create"],
   "orca worktree create": ["--name", "--agent", "--prompt"],
   "orca worktree set": ["--worktree", "--comment", "--workspace-status"],
   "orca terminal send": ["--terminal", "--text", "--enter"],
   "orca terminal read": ["--terminal"],
-  git: ["status", "diff", "commit", "log", "branch", "merge", "worktree"],
+  git: ["status", "diff", "restore", "commit", "log", "branch", "merge", "worktree"],
   "codex --sandbox": ["read-only", "workspace-write", "danger-full-access"],
   "codex exec --sandbox": ["read-only", "workspace-write", "danger-full-access"],
   "codex --ask-for-approval": ["untrusted", "on-request", "never"],
   "claude --permission-mode": ["plan", "default"],
-  "--agent": ["claude", "codex", "gemini"],
+  "--agent": ["claude", "codex", "gemini", "cursor"],
   "--workspace-status": ["todo", "in-progress", "in-review", "completed"],
   pnpm: ["test", "install"],
 };
 
 const SLASH: Record<string, string[]> = {
-  claude: ["/init", "/memory", "/context", "/skills", "/plan", "/mcp", "/clear", "/compact", "/help", "/exit"],
+  claude: ["/init", "/memory", "/context", "/skills", "/agents", "/hooks", "/permissions", "/plan", "/mcp", "/rewind", "/clear", "/compact", "/help", "/exit"],
   codex: ["/init", "/status", "/skills", "/mcp", "/compact", "/help", "/exit"],
-  gemini: ["/init", "/memory", "/mcp", "/clear", "/compact", "/help", "/exit"],
+  gemini: ["/init", "/memory", "/memory add", "/mcp", "/clear", "/compact", "/help", "/exit"],
   antigravity: ["/plan", "/skills", "/memory", "/help", "/exit"],
+  cursor: ["/clear", "/help", "/exit"],
 };
 
 /** Context-aware completions for the current input line. */

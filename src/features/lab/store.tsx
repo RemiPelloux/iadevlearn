@@ -194,3 +194,8 @@ export function useLabApi(): StoreApi<LabState> {
   if (!store) throw new Error("useLabApi must be used inside <LabProvider>");
   return store;
 }
+
+/** Like useLabApi, but returns null outside a <LabProvider> (for views also used on static pages). */
+export function useLabApiMaybe(): StoreApi<LabState> | null {
+  return useContext(LabContext);
+}

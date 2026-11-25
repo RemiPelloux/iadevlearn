@@ -123,9 +123,17 @@ const SHELL: Record<string, Handler> = {
       .map((p) => (home ? p.slice(2) : p))
       .sort();
     ctx.out(home ? "~" : ".", "info");
+    const shown = new Set<string>();
     for (const p of paths) {
-      const depth = p.split("/").length - 1;
-      ctx.out(`${"│  ".repeat(depth)}├─ ${p.split("/").pop()}`, isRulesPath(p) || p.endsWith("SKILL.md") ? "hint" : "out");
+      const parts = p.split("/");
+      // Print each folder once, before its first file, so files with the same name stay distinguishable.
+      for (let d = 0; d < parts.length - 1; d++) {
+        const dir = parts.slice(0, d + 1).join("/");
+        if (shown.has(dir)) continue;
+        shown.add(dir);
+        ctx.out(`${"│  ".repeat(d)}├─ ${parts[d]}/`, "info");
+      }
+      ctx.out(`${"│  ".repeat(parts.length - 1)}├─ ${parts.at(-1)}`, isRulesPath(p) || p.endsWith("SKILL.md") ? "hint" : "out");
     }
   },
   cat: (ctx, args) => {
@@ -196,9 +204,10 @@ const SHELL: Record<string, Handler> = {
       [
         ctx.t(tx("IA Dev Learn terminal: everything runs in a safe sandbox.", "Terminal IA Dev Learn : tout tourne dans un bac à sable sans risque.")),
         "",
-        "Agents:  claude · codex · gemini · antigravity   (claude -p \"…\", codex exec \"…\")",
+        "Agents:  claude · codex · gemini · antigravity · cursor-agent   (claude -p \"…\", codex exec \"…\")",
         "Orca:    orca worktree create|list|ps|show|set|rm · orca terminal list|send|read",
-        "Git:     git status | diff | commit -am | log | branch | merge <branch> | worktree list",
+        "         orca orchestration run-create|task-create|worker-start|check · orca automations create|list|run",
+        "Git:     git status | diff | restore <f> | commit -am | log | branch | merge <branch> | worktree list",
         "Files:   ls [-a]  tree  cat <f>  edit <f>  touch <f>  echo \"…\" > <f>  rm  mv  cp",
         "Project: pnpm test · pnpm install",
         "Other:   clear  help  <tool> --help",
@@ -217,7 +226,25 @@ function packageScript(ctx: Ctx, pm: string, args: string[]) {
   const sub = args[0] === "run" ? args[1] : args[0];
   if (sub === "test" || sub === "t") {
     ctx.out(`> vitest run`, "muted");
-    ctx.out(`✓ ${project.testCount(ctx.world.files)} tests passed`, "success");
+    const failing = project.failing(ctx.world.files);
+    const total = project.testCount(ctx.world.files);
+    if (!failing.length) {
+      ctx.out(`✓ ${total} tests passed`, "success");
+      return;
+    }
+    for (const f of failing) {
+      ctx.out(` FAIL  ${f.file} > ${f.name}`, "error");
+      ctx.out(`${f.message}`, "error");
+      ctx.out(` ❯ ${f.file}:${f.line}`, "muted");
+    }
+    ctx.out(` Tests  ${failing.length} failed | ${total - failing.length} passed (${total})`, "warning");
+    // A red test is information, not a mistake by the learner: the command itself worked.
+    ctx.explain = ctx.t(
+      tx(
+        "A failing test shows what the code should do and where it breaks. Copy the error into your prompt: it's the best context you can give an agent.",
+        "Un test qui échoue montre ce que le code devrait faire et où ça casse. Copie l'erreur dans ton prompt : c'est le meilleur contexte à donner à un agent.",
+      ),
+    );
     return;
   }
   if (sub === "install" || sub === "i" || sub === undefined) {
@@ -233,7 +260,7 @@ function packageScript(ctx: Ctx, pm: string, args: string[]) {
   fail(`${pm}: missing script: ${sub}`);
 }
 
-const PROGRAMS = ["git", "orca", ...TOOLS, "npm", "pnpm", "yarn", "bun", ...Object.keys(SHELL)];
+const PROGRAMS = ["git", "orca", ...TOOLS, "cursor-agent", "npm", "pnpm", "yarn", "bun", ...Object.keys(SHELL)];
 
 function levenshtein(a: string, b: string): number {
   const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...new Array<number>(b.length).fill(0)]);
@@ -271,6 +298,11 @@ function runOne(ctx: Ctx, cmd: ParsedCommand): string | null {
   if (cmd.redirect) fail(tx(`Redirecting the output of ${name} isn't simulated. Use echo "…" > file.`, `Rediriger la sortie de ${name} n'est pas simulé. Utilise echo "…" > fichier.`));
   if (name === "git") return gitCommand(ctx, args);
   if (name === "orca") return orcaCommand(ctx, args);
+  if (name === "cursor-agent") return toolCommand(ctx, "cursor", args);
+  if (name === "cursor") {
+    ctx.out(tx("(cursor opens the Cursor editor. Its agent for the terminal is cursor-agent.)", "(cursor ouvre l'éditeur Cursor. Son agent pour le terminal, c'est cursor-agent.)"), "muted");
+    return "cursor";
+  }
   if (TOOLS.includes(name as ToolId)) return toolCommand(ctx, name as ToolId, args);
   if (name === "agy") return toolCommand(ctx, "antigravity", args);
   if (["npm", "pnpm", "yarn", "bun"].includes(name)) {

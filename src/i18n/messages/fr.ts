@@ -23,6 +23,7 @@ export const fr: Messages = {
     commands: "Référence",
     setup: "Installer",
     docs: "Docs",
+    skills: "Skills",
     profile: "Profil",
     home: "Accueil IA Dev Learn",
     main: "Principal",

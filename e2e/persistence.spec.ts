@@ -23,7 +23,7 @@ test("playground project, terminal and history survive a reload", async ({ page 
   // choosing a sandbox starts fresh (and that is what gets saved)
   await page.getByLabel("Choose a starting project").selectOption("orca");
   await page.reload();
-  await expect(page.getByText("fix ready, tests pass")).toBeVisible();
+  await expect(page.getByText("fix ready, tests pass").first()).toBeVisible();
 });
 
 test("an unfinished lesson resumes with its terminal after a reload", async ({ page }) => {

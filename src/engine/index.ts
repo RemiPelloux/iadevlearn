@@ -11,3 +11,7 @@ export { TOOLS, SESSION_PROMPT } from "./tools";
 export { projectFiles, terminalHandle } from "./orca";
 export { hunks, diffLines, splitLines } from "./diff";
 export { serializeWorld, deserializeWorld } from "./serialize";
+export { claudeSettings, deniedBy, hooksFor } from "./settings";
+export { listSubagents, matchSubagent } from "./subagents";
+export { listGeminiCommands } from "./gemini";
+export { findInjection, gitIgnored, isSecretPath } from "./security";

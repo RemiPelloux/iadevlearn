@@ -22,6 +22,7 @@ export const en = {
     commands: "Reference",
     setup: "Install",
     docs: "Docs",
+    skills: "Skills",
     profile: "Profile",
     home: "IA Dev Learn home",
     main: "Main",

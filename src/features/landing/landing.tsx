@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Award, BookOpen, BookText, Download, Star, Target, Zap } from "lucide-react";
+import { ArrowRight, Award, BookOpen, BookText, Download, Sparkles, Star, Target, Zap } from "lucide-react";
 import { DynamicIcon } from "@/components/ui/misc";
 import { ACHIEVEMENTS } from "@/features/progress/rules";
 import type { MessageKey } from "@/i18n";
@@ -9,6 +9,8 @@ import { AppNav } from "@/components/app-nav";
 import { LinkButton } from "@/components/ui/button";
 import { localizedChapters, tierLabel } from "@/features/curriculum/localize";
 import { HeroDemo } from "@/features/landing/hero-demo";
+import { ToolBadge } from "@/features/lab/agent-view";
+import { TOOL_NAMES } from "@/engine";
 import { StartButton } from "@/features/landing/start-button";
 import { useT } from "@/i18n";
 
@@ -39,26 +41,40 @@ export function Landing() {
     <>
       <AppNav />
       <main className="pb-24 md:pb-0">
-        <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-14 pb-16 lg:grid-cols-2 lg:pt-20">
-          <div>
-            <h1 className="text-[2.5rem] leading-[1.08] font-semibold tracking-tight text-balance sm:text-[3.4rem]">
-              {t("landing.title1")} <span className="text-accent-fg">{t("landing.titleAccent")}</span>
-              {t.locale === "fr" ? "" : " "}
-              {t("landing.title2")}
-            </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-fg-2">
-              {t("landing.lead")}
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <StartButton />
-              <LinkButton href="/playground" variant="secondary" size="lg">
-                {t("landing.openPlayground")}
-              </LinkButton>
+        <div className="relative overflow-hidden">
+          <div aria-hidden className="bg-dots pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_70%_60%_at_72%_40%,black,transparent)]" />
+          <section className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pt-12 pb-20 lg:grid-cols-[1fr_1.12fr] lg:gap-14 lg:pt-20">
+            <div>
+              <h1 className="text-[2.6rem] leading-[1.03] font-semibold tracking-[-0.03em] text-balance sm:text-[3.5rem] xl:text-[3.9rem]">
+                {t("landing.title1")} <span className="text-accent-fg">{t("landing.titleAccent")}</span>
+                {t.locale === "fr" ? " " : " "}
+                {t("landing.title2")}
+              </h1>
+              <p className="mt-6 max-w-[34rem] text-lg leading-relaxed text-fg-2">{t("landing.lead")}</p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <StartButton />
+                <LinkButton href="/playground" variant="secondary" size="lg">
+                  {t("landing.openPlayground")}
+                </LinkButton>
+              </div>
+              <p className="mt-4 text-sm text-fg-3">{t("landing.reassure")}</p>
+              <div className="mt-10 border-t border-line pt-5">
+                <p className="text-xs text-fg-3">{t.locale === "fr" ? "Couvre les outils que tu utiliseras au travail" : "Covers the tools you'll use at work"}</p>
+                <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2.5 text-sm font-medium text-fg-2">
+                  {(["claude", "codex", "antigravity", "gemini"] as const).map((tool) => (
+                    <li key={tool} className="flex items-center gap-1.5">
+                      <ToolBadge tool={tool} /> {TOOL_NAMES[tool]}
+                    </li>
+                  ))}
+                  <li className="flex items-center gap-1.5">
+                    <span className="grid size-5 place-items-center rounded-md bg-fg text-[9px] font-semibold text-bg">OR</span> Orca
+                  </li>
+                </ul>
+              </div>
             </div>
-            <p className="mt-4 text-sm text-fg-3">{t("landing.reassure")}</p>
-          </div>
-          <HeroDemo />
-        </section>
+            <HeroDemo />
+          </section>
+        </div>
 
         <section className="border-y border-line bg-surface">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 lg:grid-cols-[1fr_1.4fr]">
@@ -148,11 +164,12 @@ export function Landing() {
           <h2 id="beyond" className="text-2xl font-semibold tracking-tight">
             {t.locale === "fr" ? "Apprends ici, puis passe aux vrais outils" : "Learn it here, then use the real tools"}
           </h2>
-          <ul className="mt-6 grid gap-x-8 gap-y-2 md:grid-cols-3">
+          <ul className="mt-6 grid gap-x-8 gap-y-2 md:grid-cols-2 lg:grid-cols-4">
             {(
               [
                 ["/docs", BookOpen, t.locale === "fr" ? "Docs" : "Docs", t.locale === "fr" ? "Comment marche chaque partie de l'appli, des guides sur les règles, les skills, Codex, Orca, et des antisèches à imprimer." : "How every part of the app works, guides on rules, skills, Codex and Orca, and cheat sheets to print."],
                 ["/setup", Download, t.locale === "fr" ? "Installer" : "Install", t.locale === "fr" ? "Les commandes à copier pour installer Claude Code, Codex, Gemini CLI, Antigravity et Orca sur macOS, Linux ou Windows." : "Copy-paste commands to install Claude Code, Codex, Gemini CLI, Antigravity and Orca on macOS, Linux or Windows."],
+                ["/skills", Sparkles, t.locale === "fr" ? "Bibliothèque de skills" : "Skills hub", t.locale === "fr" ? "Des skills prêts à l'emploi : les règles Pelloux, kill-my-idea, les skills officiels d'Anthropic et ceux de la communauté." : "Ready-to-use skills: the Pelloux guidelines, kill-my-idea, Anthropic's official skills and community favourites."],
                 ["/commands", BookText, t.locale === "fr" ? "Référence" : "Reference", t.locale === "fr" ? "Chaque commande et chaque fichier, avec un exemple qui tourne avant et après." : "Every command and file, each with a live before-and-after example."],
               ] as const
             ).map(([href, Icon, title, body]) => (
