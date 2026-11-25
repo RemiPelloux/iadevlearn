@@ -44,6 +44,8 @@ export const CHEAT_PAGES: DocPage[] = [
 
 ## Gemini CLI
 
+For Gemini Code Assist Standard or Enterprise and paid API or Vertex AI keys. Personal Google accounts use the Antigravity CLI, below.
+
 | Command | What it does |
 |---|---|
 | \`gemini\` | Start a session |
@@ -54,9 +56,15 @@ export const CHEAT_PAGES: DocPage[] = [
 
 ## Antigravity
 
-| Action | How |
+| Command or action | What it does |
 |---|---|
-| Open the Agent Manager | Open the app, start a conversation in a workspace |
+| \`agy\` | Start the terminal agent in the current folder |
+| \`agy -p "request"\` | Answer once and exit |
+| \`agy -i "request"\` | Start a session with a first request |
+| \`agy --version\` | Check the install |
+| \`/skills reload\` | Pick up a skill you just wrote |
+| \`/logout\` | Sign out |
+| Desktop app: Agent Manager | Run several conversations side by side |
 | Plan first | Pick the Planning mode for the conversation |
 | Run a workflow | Type \`/name\` for a file in \`.agents/workflows/\` |
 
@@ -107,6 +115,8 @@ export const CHEAT_PAGES: DocPage[] = [
 
 ## Gemini CLI
 
+Pour Gemini Code Assist Standard ou Enterprise et les clés payantes API ou Vertex AI. Les comptes Google personnels utilisent Antigravity CLI, plus bas.
+
 | Commande | Ce qu'elle fait |
 |---|---|
 | \`gemini\` | Ouvrir une session |
@@ -117,9 +127,15 @@ export const CHEAT_PAGES: DocPage[] = [
 
 ## Antigravity
 
-| Action | Comment |
+| Commande ou action | Ce qu'elle fait |
 |---|---|
-| Ouvrir l'Agent Manager | Ouvre l'appli, démarre une conversation dans un espace de travail |
+| \`agy\` | Lancer l'agent de terminal dans le dossier courant |
+| \`agy -p "demande"\` | Répondre une fois et quitter |
+| \`agy -i "demande"\` | Ouvrir une session avec une première demande |
+| \`agy --version\` | Vérifier l'installation |
+| \`/skills reload\` | Prendre en compte un skill que tu viens d'écrire |
+| \`/logout\` | Se déconnecter |
+| Appli de bureau : Agent Manager | Mener plusieurs conversations côte à côte |
 | Planifier d'abord | Choisis le mode Planning pour la conversation |
 | Lancer un workflow | Tape \`/nom\` pour un fichier de \`.agents/workflows/\` |
 
@@ -152,7 +168,7 @@ export const CHEAT_PAGES: DocPage[] = [
 | Claude Code | \`~/.claude/CLAUDE.md\` | \`CLAUDE.md\`, \`.claude/CLAUDE.md\`, \`CLAUDE.local.md\` |
 | Codex | \`~/.codex/AGENTS.md\` | \`AGENTS.md\` (and one per subfolder) |
 | Gemini CLI | \`~/.gemini/GEMINI.md\` | \`GEMINI.md\` |
-| Antigravity | \`~/.gemini/GEMINI.md\` | \`AGENTS.md\`, \`GEMINI.md\`, \`.agents/rules/*.md\` |
+| Antigravity (app and \`agy\`) | \`~/.gemini/GEMINI.md\`, \`~/.gemini/AGENTS.md\`, \`~/.gemini/config/rules/\` | \`AGENTS.md\`, \`GEMINI.md\`, \`.agents/rules/*.md\` |
 | Cursor | | \`.cursor/rules/*.mdc\`, \`AGENTS.md\` |
 
 ## Skills and workflows
@@ -161,7 +177,7 @@ export const CHEAT_PAGES: DocPage[] = [
 |---|---|---|
 | Claude Code | \`.claude/skills/<name>/SKILL.md\`, \`~/.claude/skills/\` | |
 | Codex | \`.agents/skills/<name>/SKILL.md\`, \`~/.agents/skills/\` | |
-| Antigravity | \`.agents/skills/<name>/SKILL.md\` | \`.agents/workflows/<name>.md\` |
+| Antigravity (app and \`agy\`) | \`.agents/skills/<name>/SKILL.md\`, \`~/.gemini/config/skills/\` | \`.agents/workflows/<name>.md\` |
 
 ## Settings
 
@@ -184,7 +200,7 @@ mkdir -p .claude/skills .agents/skills
 | Claude Code | \`~/.claude/CLAUDE.md\` | \`CLAUDE.md\`, \`.claude/CLAUDE.md\`, \`CLAUDE.local.md\` |
 | Codex | \`~/.codex/AGENTS.md\` | \`AGENTS.md\` (et un par sous-dossier) |
 | Gemini CLI | \`~/.gemini/GEMINI.md\` | \`GEMINI.md\` |
-| Antigravity | \`~/.gemini/GEMINI.md\` | \`AGENTS.md\`, \`GEMINI.md\`, \`.agents/rules/*.md\` |
+| Antigravity (appli et \`agy\`) | \`~/.gemini/GEMINI.md\`, \`~/.gemini/AGENTS.md\`, \`~/.gemini/config/rules/\` | \`AGENTS.md\`, \`GEMINI.md\`, \`.agents/rules/*.md\` |
 | Cursor | | \`.cursor/rules/*.mdc\`, \`AGENTS.md\` |
 
 ## Skills et workflows
@@ -193,7 +209,7 @@ mkdir -p .claude/skills .agents/skills
 |---|---|---|
 | Claude Code | \`.claude/skills/<nom>/SKILL.md\`, \`~/.claude/skills/\` | |
 | Codex | \`.agents/skills/<nom>/SKILL.md\`, \`~/.agents/skills/\` | |
-| Antigravity | \`.agents/skills/<nom>/SKILL.md\` | \`.agents/workflows/<nom>.md\` |
+| Antigravity (appli et \`agy\`) | \`.agents/skills/<nom>/SKILL.md\`, \`~/.gemini/config/skills/\` | \`.agents/workflows/<nom>.md\` |
 
 ## Réglages
 

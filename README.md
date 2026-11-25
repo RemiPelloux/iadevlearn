@@ -49,16 +49,21 @@ curl -fsSL https://claude.ai/install.sh | bash
 # Windows PowerShell — Claude Code
 irm https://claude.ai/install.ps1 | iex
 
-# Codex and Gemini CLI (need Node.js LTS + npm)
+# Codex (needs Node.js LTS + npm)
 npm install -g @openai/codex
+
+# Antigravity CLI (agy): replaced Gemini CLI for personal Google accounts on June 18, 2026
+curl -fsSL https://antigravity.google/cli/install.sh | bash        # macOS / Linux
+irm https://antigravity.google/cli/install.ps1 | iex               # Windows PowerShell
+# Gemini CLI, only for Gemini Code Assist Standard/Enterprise or paid API / Vertex AI keys:
 npm install -g @google/gemini-cli
 
 # Orca (macOS) — other systems: https://onorca.dev
 brew install --cask stablyai/orca/orca
-# Antigravity: https://antigravity.google/download
+# Antigravity desktop app: https://antigravity.google/download
 
 # Check
-claude --version && codex --version && gemini --version
+claude --version && codex --version && agy --version
 ```
 
 ## Architecture

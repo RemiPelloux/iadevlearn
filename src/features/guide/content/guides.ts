@@ -30,14 +30,16 @@ Your job moves from typing code to describing work precisely, giving the agent t
 |---|---|---|---|---|
 | Claude Code | Anthropic | Terminal (also IDE extensions and desktop) | \`CLAUDE.md\` | \`.claude/skills/\` |
 | Codex | OpenAI | Terminal, with a configurable sandbox | \`AGENTS.md\` | \`.agents/skills/\` |
+| Antigravity | Google | Terminal (\`agy\`) and a desktop IDE with an Agent Manager | \`AGENTS.md\`, \`GEMINI.md\`, \`.agents/rules/\` | \`.agents/skills/\` |
 | Gemini CLI | Google | Terminal, open source | \`GEMINI.md\` | not covered here |
-| Antigravity | Google | Desktop IDE with an Agent Manager | \`AGENTS.md\`, \`GEMINI.md\`, \`.agents/rules/\` | \`.agents/skills/\` |
 
-They differ in commands and file names more than in how you should work with them. Everything in the guides that follow applies to all four.
+Since June 18, 2026, personal Google accounts (free, Google AI Pro and Ultra) use the Antigravity CLI, \`agy\`, instead of Gemini CLI. Gemini CLI still serves Gemini Code Assist Standard and Enterprise and paid Gemini API or Vertex AI keys, so you'll still meet it at work, and the simulator keeps it because its \`GEMINI.md\` rules and \`@\` imports are a clear example.
+
+They differ in commands and file names more than in how you should work with them. Everything in the guides that follow applies to all of them.
 
 ## Talking to one
 
-Start it in a project folder by typing its name, then write what you want in plain language, in English or French. One-off commands exist too: \`claude -p "..."\`, \`codex exec "..."\` and \`gemini -p "..."\` answer once and exit, which is handy in scripts.`,
+Start it in a project folder by typing its command (\`claude\`, \`codex\`, \`agy\`), then write what you want in plain language, in English or French. One-off commands exist too: \`claude -p "..."\`, \`codex exec "..."\` and \`agy -p "..."\` answer once and exit, which is handy in scripts.`,
       fr: `## La boucle
 
 Tous les agents travaillent de la même façon, quel que soit leur éditeur :
@@ -56,14 +58,16 @@ Ton travail passe de taper du code à décrire le travail précisément, donner 
 |---|---|---|---|---|
 | Claude Code | Anthropic | Terminal (aussi extensions d'IDE et appli de bureau) | \`CLAUDE.md\` | \`.claude/skills/\` |
 | Codex | OpenAI | Terminal, avec une sandbox configurable | \`AGENTS.md\` | \`.agents/skills/\` |
+| Antigravity | Google | Terminal (\`agy\`) et un IDE de bureau avec un Agent Manager | \`AGENTS.md\`, \`GEMINI.md\`, \`.agents/rules/\` | \`.agents/skills/\` |
 | Gemini CLI | Google | Terminal, open source | \`GEMINI.md\` | non couvert ici |
-| Antigravity | Google | IDE de bureau avec un Agent Manager | \`AGENTS.md\`, \`GEMINI.md\`, \`.agents/rules/\` | \`.agents/skills/\` |
 
-Ils diffèrent par les commandes et les noms de fichiers plus que par la façon de travailler avec eux. Tout ce que disent les guides suivants vaut pour les quatre.
+Depuis le 18 juin 2026, les comptes Google personnels (gratuit, Google AI Pro et Ultra) utilisent Antigravity CLI, \`agy\`, à la place de Gemini CLI. Gemini CLI sert toujours Gemini Code Assist Standard et Enterprise et les clés payantes Gemini API ou Vertex AI : tu le croiseras donc encore au travail, et le simulateur le garde parce que ses règles \`GEMINI.md\` et ses imports \`@\` sont un exemple clair.
+
+Ils diffèrent par les commandes et les noms de fichiers plus que par la façon de travailler avec eux. Tout ce que disent les guides suivants vaut pour tous.
 
 ## Lui parler
 
-Lance-le dans un dossier de projet en tapant son nom, puis écris ce que tu veux avec tes mots, en français ou en anglais. Il existe aussi des commandes ponctuelles : \`claude -p "..."\`, \`codex exec "..."\` et \`gemini -p "..."\` répondent une fois puis s'arrêtent, pratique dans les scripts.`,
+Lance-le dans un dossier de projet en tapant sa commande (\`claude\`, \`codex\`, \`agy\`), puis écris ce que tu veux avec tes mots, en français ou en anglais. Il existe aussi des commandes ponctuelles : \`claude -p "..."\`, \`codex exec "..."\` et \`agy -p "..."\` répondent une fois puis s'arrêtent, pratique dans les scripts.`,
     },
   },
   {
@@ -266,8 +270,8 @@ Lis le diff. \`git diff\` dans le terminal, ou la vue [[Changements]] de l'édit
 |---|---|---|---|
 | Claude Code | \`~/.claude/CLAUDE.md\` | \`CLAUDE.md\`, \`.claude/CLAUDE.md\` | \`CLAUDE.local.md\` for personal notes in one project. \`@path\` lines import other files. |
 | Codex | \`~/.codex/AGENTS.md\` | \`AGENTS.md\` | An AGENTS.md in a subfolder adds rules for that folder. |
-| Gemini CLI | \`~/.gemini/GEMINI.md\` | \`GEMINI.md\` | Supports \`@path\` imports too. |
-| Antigravity | \`~/.gemini/GEMINI.md\` | \`AGENTS.md\`, \`GEMINI.md\`, \`.agents/rules/*.md\` | One file per topic in \`.agents/rules/\`. |
+| Gemini CLI | \`~/.gemini/GEMINI.md\` | \`GEMINI.md\` | Supports \`@path\` imports too. For Code Assist and Google Cloud users. |
+| Antigravity (app and \`agy\`) | \`~/.gemini/GEMINI.md\`, \`~/.gemini/AGENTS.md\`, \`~/.gemini/config/rules/\` | \`AGENTS.md\`, \`GEMINI.md\`, \`.agents/rules/*.md\` | One file per topic in \`rules/\`. |
 | Cursor | | \`.cursor/rules/*.mdc\`, \`AGENTS.md\` | \`.mdc\` rules can target files with globs. |
 
 ## One rulebook for every agent
@@ -313,8 +317,8 @@ Exact commands in backticks, conventions that differ from the defaults, folders 
 |---|---|---|---|
 | Claude Code | \`~/.claude/CLAUDE.md\` | \`CLAUDE.md\`, \`.claude/CLAUDE.md\` | \`CLAUDE.local.md\` pour des notes perso dans un projet. Les lignes \`@chemin\` importent d'autres fichiers. |
 | Codex | \`~/.codex/AGENTS.md\` | \`AGENTS.md\` | Un AGENTS.md dans un sous-dossier ajoute des règles pour ce dossier. |
-| Gemini CLI | \`~/.gemini/GEMINI.md\` | \`GEMINI.md\` | Accepte aussi les imports \`@chemin\`. |
-| Antigravity | \`~/.gemini/GEMINI.md\` | \`AGENTS.md\`, \`GEMINI.md\`, \`.agents/rules/*.md\` | Un fichier par sujet dans \`.agents/rules/\`. |
+| Gemini CLI | \`~/.gemini/GEMINI.md\` | \`GEMINI.md\` | Accepte aussi les imports \`@chemin\`. Pour Code Assist et Google Cloud. |
+| Antigravity (appli et \`agy\`) | \`~/.gemini/GEMINI.md\`, \`~/.gemini/AGENTS.md\`, \`~/.gemini/config/rules/\` | \`AGENTS.md\`, \`GEMINI.md\`, \`.agents/rules/*.md\` | Un fichier par sujet dans \`rules/\`. |
 | Cursor | | \`.cursor/rules/*.mdc\`, \`AGENTS.md\` | Les règles \`.mdc\` peuvent cibler des fichiers avec des globs. |
 
 ## Un seul règlement pour tous les agents
@@ -397,7 +401,7 @@ You can also call one by name: \`/changelog\` in Claude Code, \`$changelog\` in 
 |---|---|---|
 | Claude Code | \`.claude/skills/<name>/SKILL.md\` | \`~/.claude/skills/\` |
 | Codex | \`.agents/skills/<name>/SKILL.md\` | \`~/.agents/skills/\` |
-| Antigravity | \`.agents/skills/<name>/SKILL.md\` | global skills folder, see its docs |
+| Antigravity (app and \`agy\`) | \`.agents/skills/<name>/SKILL.md\` | \`~/.gemini/config/skills/\` (\`agy\` also reads \`~/.gemini/antigravity-cli/skills/\`) |
 
 The format is the same everywhere, so one skill works in several tools:
 
@@ -439,7 +443,7 @@ Tu peux aussi en appeler un par son nom : \`/changelog\` dans Claude Code, \`$ch
 |---|---|---|
 | Claude Code | \`.claude/skills/<nom>/SKILL.md\` | \`~/.claude/skills/\` |
 | Codex | \`.agents/skills/<nom>/SKILL.md\` | \`~/.agents/skills/\` |
-| Antigravity | \`.agents/skills/<nom>/SKILL.md\` | dossier global, voir sa doc |
+| Antigravity (appli et \`agy\`) | \`.agents/skills/<nom>/SKILL.md\` | \`~/.gemini/config/skills/\` (\`agy\` lit aussi \`~/.gemini/antigravity-cli/skills/\`) |
 
 Le format est le même partout, donc un skill marche dans plusieurs outils :
 
@@ -549,7 +553,11 @@ codex exec --full-auto "Fix the failing test in @src/cart.ts"
 | \`.agents/skills/\` | The agent | When your request matches the skill's description |
 | \`.agents/workflows/\` | You | When you type \`/name\` in the chat |
 
-Antigravity also reads \`AGENTS.md\` and \`GEMINI.md\` in the workspace, and global rules in \`~/.gemini/GEMINI.md\`. Older projects may use \`.agent/\` (singular), which it still accepts.
+Antigravity also reads \`AGENTS.md\` and \`GEMINI.md\` from the working folder up to the repository root. Your personal versions live in \`~/.gemini/GEMINI.md\`, \`~/.gemini/AGENTS.md\` and \`~/.gemini/config/\` (with the same \`rules/\` and \`skills/\` folders). Older projects may use \`.agent/\` (singular), which it still accepts.
+
+## Desktop app or terminal
+
+Antigravity comes as a desktop app and as a terminal agent, \`agy\`. Both read the same files, so a rule or skill you commit works in either. In \`agy\`, \`/skills reload\` picks up a skill you just wrote, and \`agy -p "..."\` answers once and exits. Since June 2026, \`agy\` is also what personal Google accounts use instead of Gemini CLI.
 
 ## A workflow
 
@@ -577,7 +585,11 @@ Use a workflow for a procedure you start on purpose, at a moment you choose: a r
 | \`.agents/skills/\` | L'agent | Quand ta demande correspond à la description du skill |
 | \`.agents/workflows/\` | Toi | Quand tu tapes \`/nom\` dans le chat |
 
-Antigravity lit aussi \`AGENTS.md\` et \`GEMINI.md\` dans l'espace de travail, et les règles globales dans \`~/.gemini/GEMINI.md\`. Les projets plus anciens utilisent parfois \`.agent/\` (au singulier), qu'il accepte encore.
+Antigravity lit aussi \`AGENTS.md\` et \`GEMINI.md\` du dossier de travail jusqu'à la racine du dépôt. Tes versions personnelles vivent dans \`~/.gemini/GEMINI.md\`, \`~/.gemini/AGENTS.md\` et \`~/.gemini/config/\` (avec les mêmes dossiers \`rules/\` et \`skills/\`). Les projets plus anciens utilisent parfois \`.agent/\` (au singulier), qu'il accepte encore.
+
+## Appli de bureau ou terminal
+
+Antigravity existe en appli de bureau et en agent de terminal, \`agy\`. Les deux lisent les mêmes fichiers : une règle ou un skill commité marche dans l'un comme dans l'autre. Dans \`agy\`, \`/skills reload\` prend en compte un skill que tu viens d'écrire, et \`agy -p "..."\` répond une fois puis s'arrête. Depuis juin 2026, \`agy\` est aussi ce qu'utilisent les comptes Google personnels à la place de Gemini CLI.
 
 ## Un workflow
 

@@ -66,8 +66,8 @@ function steps(l: L): Step[] {
       id: "prereq",
       title: l("1. Git and Node.js", "1. Git et Node.js"),
       body: l(
-        "Every agent CLI needs Git, and Codex and Gemini CLI install with npm, which comes with Node.js (use the LTS version, 20 or newer).",
-        "Chaque CLI d'agent a besoin de Git, et Codex et Gemini CLI s'installent avec npm, fourni avec Node.js (prends la version LTS, 20 ou plus).",
+        "Every agent needs Git, and Codex installs with npm, which comes with Node.js (use the LTS version, 20 or newer).",
+        "Chaque agent a besoin de Git, et Codex s'installe avec npm, fourni avec Node.js (prends la version LTS, 20 ou plus).",
       ),
       blocks: {
         mac: [
@@ -116,20 +116,52 @@ function steps(l: L): Step[] {
       link: { href: "https://developers.openai.com/codex", label: l("Official Codex docs", "Doc officielle de Codex") },
     },
     {
-      id: "gemini",
-      title: "4. Gemini CLI",
-      body: l("Google's open-source agent. Log in with your Google account on first launch.", "L'agent open source de Google. Connecte-toi avec ton compte Google au premier lancement."),
+      id: "agy",
+      title: l("4. Antigravity CLI (agy)", "4. Antigravity CLI (agy)"),
+      body: l(
+        "Google's coding agent for the terminal. Since June 18, 2026 it replaces Gemini CLI for personal Google accounts (free, Google AI Pro and Ultra). The installer puts agy in ~/.local/bin and doesn't need Node.js. On first launch it asks for a colour scheme and whether to trust the folder, then opens your browser so you can sign in with Google.",
+        "L'agent de code de Google pour le terminal. Depuis le 18 juin 2026, il remplace Gemini CLI pour les comptes Google personnels (gratuit, Google AI Pro et Ultra). L'installeur place agy dans ~/.local/bin et n'a pas besoin de Node.js. Au premier lancement, il demande un jeu de couleurs et s'il peut faire confiance au dossier, puis ouvre ton navigateur pour que tu te connectes avec Google.",
+      ),
       blocks: {
-        mac: [{ shell: "Terminal", code: "npm install -g @google/gemini-cli\ngemini" }],
-        linux: [{ shell: "bash", code: "npm install -g @google/gemini-cli\ngemini" }],
-        windows: [{ shell: "PowerShell", code: "npm install -g @google/gemini-cli\ngemini" }],
+        mac: [
+          { shell: "Terminal", code: "curl -fsSL https://antigravity.google/cli/install.sh | bash" },
+          { shell: "Terminal", code: "agy --version\nagy", note: l('One-off question without the interactive screen: agy -p "Explain this project"', 'Une question ponctuelle sans l\'écran interactif : agy -p "Explique ce projet"') },
+          {
+            shell: l("Terminal (Code Assist or Google Cloud only)", "Terminal (Code Assist ou Google Cloud seulement)"),
+            code: "npm install -g @google/gemini-cli\ngemini",
+            note: l(
+              "Only if your company uses Gemini Code Assist Standard or Enterprise, or you have a paid Gemini API or Vertex AI key: Gemini CLI still serves those. It needs Node.js 20 or newer.",
+              "Seulement si ton entreprise utilise Gemini Code Assist Standard ou Enterprise, ou si tu as une clé payante Gemini API ou Vertex AI : Gemini CLI les sert toujours. Il demande Node.js 20 ou plus.",
+            ),
+          },
+        ],
+        linux: [
+          { shell: "bash", code: "curl -fsSL https://antigravity.google/cli/install.sh | bash" },
+          { shell: "bash", code: "agy --version\nagy", note: l("Over SSH, agy prints a sign-in link: open it on another device and paste the code back.", "En SSH, agy affiche un lien de connexion : ouvre-le sur un autre appareil et recolle le code.") },
+          {
+            shell: l("bash (Code Assist or Google Cloud only)", "bash (Code Assist ou Google Cloud seulement)"),
+            code: "npm install -g @google/gemini-cli\ngemini",
+            note: l(
+              "Only if your company uses Gemini Code Assist Standard or Enterprise, or you have a paid Gemini API or Vertex AI key: Gemini CLI still serves those. It needs Node.js 20 or newer.",
+              "Seulement si ton entreprise utilise Gemini Code Assist Standard ou Enterprise, ou si tu as une clé payante Gemini API ou Vertex AI : Gemini CLI les sert toujours. Il demande Node.js 20 ou plus.",
+            ),
+          },
+        ],
+        windows: [
+          { shell: "PowerShell", code: "irm https://antigravity.google/cli/install.ps1 | iex" },
+          { shell: "CMD", code: "curl -fsSL https://antigravity.google/cli/install.cmd -o install.cmd && install.cmd && del install.cmd", note: l("Same installer, if you use the classic Command Prompt instead of PowerShell.", "Le même installeur, si tu utilises l'Invite de commandes classique au lieu de PowerShell.") },
+          { shell: "PowerShell", code: "agy --version\nagy" },
+        ],
       },
-      link: { href: "https://github.com/google-gemini/gemini-cli", label: l("Gemini CLI on GitHub", "Gemini CLI sur GitHub") },
+      link: { href: "https://antigravity.google/docs/getting-started?tab=cli", label: l("Antigravity CLI docs", "Doc d'Antigravity CLI") },
     },
     {
       id: "antigravity",
-      title: "5. Antigravity",
-      body: l("Google's agent-first IDE is a desktop app: download the installer for your system, open it and sign in with Google.", "L'IDE « agent d'abord » de Google est une appli de bureau : télécharge l'installeur pour ton système, ouvre-le et connecte-toi avec Google."),
+      title: l("5. Antigravity desktop app", "5. L'appli de bureau Antigravity"),
+      body: l(
+        "The same agent in an IDE, with an Agent Manager to run several conversations side by side. It reads the same .agents/ folder, AGENTS.md and GEMINI.md as the CLI. Download the installer for your system, open it and sign in with Google.",
+        "Le même agent dans un IDE, avec un Agent Manager pour mener plusieurs conversations côte à côte. Il lit le même dossier .agents/, AGENTS.md et GEMINI.md que la CLI. Télécharge l'installeur pour ton système, ouvre-le et connecte-toi avec Google.",
+      ),
       blocks: {},
       link: { href: "https://antigravity.google/download", label: l("Download Antigravity", "Télécharger Antigravity") },
     },
@@ -152,9 +184,9 @@ function steps(l: L): Step[] {
       title: l("7. Check everything", "7. Tout vérifier"),
       body: l("Each line should print a version number.", "Chaque ligne doit afficher un numéro de version."),
       blocks: {
-        mac: [{ shell: "Terminal", code: "git --version && node --version && claude --version && codex --version && gemini --version" }],
-        linux: [{ shell: "bash", code: "git --version && node --version && claude --version && codex --version && gemini --version" }],
-        windows: [{ shell: "PowerShell", code: "git --version; node --version; claude --version; gemini --version" }],
+        mac: [{ shell: "Terminal", code: "git --version && node --version && claude --version && codex --version && agy --version" }],
+        linux: [{ shell: "bash", code: "git --version && node --version && claude --version && codex --version && agy --version" }],
+        windows: [{ shell: "PowerShell", code: "git --version; node --version; claude --version; agy --version" }],
       },
     },
     {

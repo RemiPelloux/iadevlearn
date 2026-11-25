@@ -187,7 +187,7 @@ The text before your cursor tells you who is listening.
 | \`gemini >\` | Gemini CLI | \`Explain this project\` |
 | \`antigravity ▸\` | Antigravity | \`/release\` |
 
-Type \`claude\`, \`codex\`, \`gemini\` or \`antigravity\` to start a session, and \`/exit\` to leave it. Inside Claude Code or Gemini CLI, start a line with \`!\` to run one shell command without leaving, for example \`!rm package-lock.json\`.
+Type \`claude\`, \`codex\`, \`gemini\` or \`antigravity\` to start a session, and \`/exit\` to leave it. \`agy\`, the real Antigravity CLI command, opens Antigravity too. Inside Claude Code or Gemini CLI, start a line with \`!\` to run one shell command without leaving, for example \`!rm package-lock.json\`.
 
 ## Assisted and Real
 
@@ -229,7 +229,7 @@ Le texte avant ton curseur te dit qui écoute.
 | \`gemini >\` | Gemini CLI | \`Explique ce projet\` |
 | \`antigravity ▸\` | Antigravity | \`/release\` |
 
-Tape \`claude\`, \`codex\`, \`gemini\` ou \`antigravity\` pour ouvrir une session, et \`/exit\` pour en sortir. Dans Claude Code ou Gemini CLI, commence une ligne par \`!\` pour lancer une commande shell sans sortir, par exemple \`!rm package-lock.json\`.
+Tape \`claude\`, \`codex\`, \`gemini\` ou \`antigravity\` pour ouvrir une session, et \`/exit\` pour en sortir. \`agy\`, la vraie commande d'Antigravity CLI, ouvre aussi Antigravity. Dans Claude Code ou Gemini CLI, commence une ligne par \`!\` pour lancer une commande shell sans sortir, par exemple \`!rm package-lock.json\`.
 
 ## Assisté et Réel
 
