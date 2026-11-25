@@ -380,7 +380,7 @@ The [[Files]] tab lists the project, then your home folder (\`~\`) below it. Ico
 | Purple flow | An Antigravity workflow |
 | Yellow gear | A tool's settings, like \`~/.codex/config.toml\` |
 
-A green **N** means the file is new since the last commit, a yellow **M** that it was modified. Hover a row to see [[Rename]] and [[Delete]]. [[New file]] accepts a full path such as \`.claude/skills/demo/SKILL.md\`: folders appear on their own.
+A green **N** means the file is new since the last commit, a yellow **M** that it was modified. Hover a row to see [[Rename]] and [[Delete]]. [[New file]] accepts a full path such as \`.claude/skills/demo/SKILL.md\`: folders appear on their own. Click a folder to fold or unfold it; hover it to add a file inside or delete the whole folder.
 
 ## Editing
 
@@ -402,7 +402,7 @@ L'onglet [[Fichiers]] liste le projet, puis ton dossier perso (\`~\`) en dessous
 | Flux violet | Un workflow Antigravity |
 | Engrenage jaune | Les réglages d'un outil, comme \`~/.codex/config.toml\` |
 
-Un **N** vert veut dire que le fichier est nouveau depuis le dernier commit, un **M** jaune qu'il a été modifié. Survole une ligne pour voir [[Renommer]] et [[Supprimer]]. [[Nouveau fichier]] accepte un chemin complet comme \`.claude/skills/demo/SKILL.md\` : les dossiers apparaissent tout seuls.
+Un **N** vert veut dire que le fichier est nouveau depuis le dernier commit, un **M** jaune qu'il a été modifié. Survole une ligne pour voir [[Renommer]] et [[Supprimer]]. [[Nouveau fichier]] accepte un chemin complet comme \`.claude/skills/demo/SKILL.md\` : les dossiers apparaissent tout seuls. Clique sur un dossier pour le replier ou le déplier ; survole-le pour y ajouter un fichier ou supprimer tout le dossier.
 
 ## Modifier
 

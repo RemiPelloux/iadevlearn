@@ -13,15 +13,19 @@ npm run e2e        # Playwright: desktop + phone journeys (run `npx next build` 
 
 ## Curriculum
 
+31 lessons in 9 chapters, each one checked by a test that plays it to the end in English and French.
+
 | # | Chapter | Lessons |
 |---|---------|---------|
 | 1 | Meet your coding agent | What is a coding agent? · Your first real prompt |
-| 2 | The art of prompting | Context is everything · Plan first, then verify |
-| 3 | Rules: teach your agent once | What are rules? · One rulebook for every agent · Writing rules that work |
-| 4 | Skills: know-how on demand | What is a skill? · **Boss:** Forge your own skill |
-| 5 | Codex, Antigravity & co | Codex: sandbox and approvals · Antigravity: rules, skills, workflows |
-| 6 | Orca: a team of agents | Parallel agents with worktrees · **Boss:** Conduct a team of agents |
-| 7–8 | MCP, hooks & subagents · Safety & trust | coming soon |
+| 2 | The art of prompting | Context is everything · Plan first, then verify · Steer the conversation · Show the agent the evidence |
+| 3 | Rules: teach your agent once | What are rules? · One rulebook for every agent · Writing rules that work · Rules for one folder · Cursor's project rules |
+| 4 | Skills: know-how on demand | What is a skill? · **Boss:** Forge your own skill · Skills with files and scripts |
+| 5 | Codex, Antigravity & co | Codex: sandbox and approvals · Antigravity: rules, skills, workflows · Gemini CLI in depth · Cursor's agent in the terminal |
+| 6 | Orca: a team of agents | Parallel agents with worktrees · **Boss:** Conduct a team of agents · A coordinator with tasks and dependencies · Automations: prompts on a schedule |
+| 7 | MCP, hooks & subagents | What is MCP? · What MCP servers cost · Hooks: commands that always run · Subagents: delegate and keep your context |
+| 8 | Safety & trust | Keep secrets out of the context · Prompt injection · Review the agent's diff |
+| 9 | Ship it: real work with agents | Let the agent write the commit · **Boss:** Ship a feature end to end |
 
 Every lesson follows Discover → Watch → Try → Experiment → Challenge → Celebrate, with XP, stars, badges, daily quests and three-level hints. The control to press next pulses gently (a steady outline with reduced motion).
 

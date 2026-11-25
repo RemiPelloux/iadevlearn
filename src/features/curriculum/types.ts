@@ -110,6 +110,7 @@ export type Step = DiscoverStep | WatchStep | TryStep | ExperimentStep | Challen
 /** Which tools the lesson workspace shows: the interface grows with the learner. */
 export interface LessonUi {
   files: boolean;
+  /** Lesson steps open the files they write. Learners can always open files themselves. */
   editor: boolean;
   /** The "Run" inspector: last prompt, context, assumptions, diff. */
   run: boolean;

@@ -3,7 +3,7 @@
 import { clsx } from "clsx";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { BookOpenCheck, Check, FilePlus2, FileText, Home, Pencil, Settings2, Sparkles, Trash2, Workflow, X } from "lucide-react";
+import { BookOpenCheck, Check, ChevronRight, ChevronsDownUp, ChevronsUpDown, FilePlus2, FileText, Folder, FolderOpen, Home, Pencil, Settings2, Sparkles, Trash2, Workflow, X } from "lucide-react";
 import { isRulesPath, type World } from "@/engine";
 import { useL } from "@/i18n";
 import { useLab } from "./store";
@@ -52,10 +52,64 @@ export function StateBadge({ state }: { state: FileState }) {
   );
 }
 
+interface Dir {
+  dirs: Map<string, Dir>;
+  files: string[];
+}
+
+type Row =
+  | { type: "dir"; path: string; name: string; depth: number; open: boolean; state: FileState; count: number }
+  | { type: "file"; path: string; name: string; depth: number };
+
+/** Turns flat paths ("src/cart.ts") into a folder tree. `prefix` is stripped first ("~/" for the home folder). */
+function buildTree(paths: string[], prefix: string): Dir {
+  const root: Dir = { dirs: new Map(), files: [] };
+  for (const p of paths) {
+    const parts = p.slice(prefix.length).split("/");
+    let d = root;
+    for (const part of parts.slice(0, -1)) {
+      let next = d.dirs.get(part);
+      if (!next) d.dirs.set(part, (next = { dirs: new Map(), files: [] }));
+      d = next;
+    }
+    d.files.push(p);
+  }
+  return root;
+}
+
+function allFiles(d: Dir): string[] {
+  return [...d.files, ...[...d.dirs.values()].flatMap(allFiles)];
+}
+
+/** Folders roll up their files: modified wins over new, like an IDE. */
+function dirState(world: World, d: Dir): FileState {
+  const states = allFiles(d).map((p) => fileState(world, p));
+  return states.includes("modified") ? "modified" : states.includes("new") ? "new" : "clean";
+}
+
+/** Visible rows, depth first: folders before files, each sorted by name. */
+function flatten(world: World, d: Dir, base: string, depth: number, collapsed: Set<string>, out: Row[] = []): Row[] {
+  for (const [name, child] of [...d.dirs].sort(([a], [b]) => a.localeCompare(b))) {
+    const path = base + name;
+    const open = !collapsed.has(path);
+    out.push({ type: "dir", path, name, depth, open, state: dirState(world, child), count: allFiles(child).length });
+    if (open) flatten(world, child, `${path}/`, depth + 1, collapsed, out);
+  }
+  for (const f of [...d.files].sort((a, b) => a.localeCompare(b))) out.push({ type: "file", path: f, name: f.slice(f.lastIndexOf("/") + 1), depth });
+  return out;
+}
+
+/** "src/a/b.ts" → ["src", "src/a"]: the folders that contain a file. */
+const parentsOf = (p: string) => {
+  const parts = p.split("/");
+  return parts.slice(0, -1).map((_, i) => parts.slice(0, i + 1).join("/"));
+};
+
 export function FilesPanel({ onOpen }: { onOpen?: (path: string) => void }) {
   const world = useLab((s) => s.world);
   const writeFile = useLab((s) => s.writeFile);
   const deleteFile = useLab((s) => s.deleteFile);
+  const deleteFolder = useLab((s) => s.deleteFolder);
   const renameFile = useLab((s) => s.renameFile);
   const openFile = useLab((s) => s.openFile);
   const setOpenFile = useLab((s) => s.setOpenFile);
@@ -63,25 +117,58 @@ export function FilesPanel({ onOpen }: { onOpen?: (path: string) => void }) {
   const [newName, setNewName] = useState("");
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameTo, setRenameTo] = useState("");
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
   const l = useL();
 
-  const all = Object.keys(world.files).sort((a, b) => {
-    const da = a.startsWith(".") || a.includes("/") ? 0 : 1;
-    const db = b.startsWith(".") || b.includes("/") ? 0 : 1;
-    return da - db || a.localeCompare(b);
-  });
-  const project = all.filter((p) => !p.startsWith("~/"));
-  const home = all.filter((p) => p.startsWith("~/"));
+  // Opening a file from elsewhere (terminal `edit`, Run panel) reveals it in the tree.
+  const [revealed, setRevealed] = useState<string | null>(null);
+  if (openFile !== revealed) {
+    setRevealed(openFile);
+    if (openFile && parentsOf(openFile).some((d) => collapsed.has(d))) {
+      const next = new Set(collapsed);
+      for (const d of parentsOf(openFile)) next.delete(d);
+      setCollapsed(next);
+    }
+  }
+
+  const paths = Object.keys(world.files);
+  const project = paths.filter((p) => !p.startsWith("~/"));
+  const home = paths.filter((p) => p.startsWith("~/"));
   const changed = project.filter((p) => fileState(world, p) !== "clean").length;
+  const projectRows = flatten(world, buildTree(project, ""), "", 0, collapsed);
+  const homeRows = flatten(world, buildTree(home, "~/"), "~/", 0, collapsed);
+  const folders = new Set([...projectRows, ...homeRows].filter((r) => r.type === "dir").map((r) => r.path));
+  const anyOpen = [...folders].some((d) => !collapsed.has(d));
+
+  const toggle = (dir: string, open?: boolean) =>
+    setCollapsed((c) => {
+      const next = new Set(c);
+      if (open ?? next.has(dir)) next.delete(dir);
+      else next.add(dir);
+      return next;
+    });
+  const collapseAll = () => {
+    if (anyOpen) {
+      const all = new Set<string>();
+      for (const p of paths) for (const d of parentsOf(p)) all.add(d);
+      setCollapsed(all);
+    } else setCollapsed(new Set());
+  };
 
   const open = (p: string) => {
     setOpenFile(p);
     onOpen?.(p);
   };
 
+  const startCreate = (dir = "") => {
+    setCreating(true);
+    setNewName(dir ? `${dir}/` : "");
+    if (dir) toggle(dir, true);
+  };
+
   const create = () => {
     const name = newName.trim().replace(/^\.\//, "");
-    if (name && !(name in world.files)) {
+    if (name && !name.endsWith("/") && !(name in world.files)) {
       writeFile(name, "");
       open(name);
     }
@@ -89,22 +176,63 @@ export function FilesPanel({ onOpen }: { onOpen?: (path: string) => void }) {
     setNewName("");
   };
 
-  const row = (p: string) => {
-    const st = fileState(world, p);
-    const shown = p.startsWith("~/") ? p.slice(2) : p;
-    const slash = shown.lastIndexOf("/");
+  const indent = (depth: number) =>
+    Array.from({ length: depth }, (_, i) => <span key={i} aria-hidden className="relative h-full w-3.5 shrink-0 self-stretch before:absolute before:inset-y-[-6px] before:left-[7px] before:w-px before:bg-line" />);
+
+  const rowCls = (on: boolean) =>
+    clsx("group flex items-center gap-1 rounded-md pr-1 pl-1.5 text-sm", on ? "bg-accent-soft" : "hover:bg-surface-2");
+
+  const dirRow = (r: Extract<Row, { type: "dir" }>) => {
+    const Icon = r.open ? FolderOpen : Folder;
     return (
-      <motion.li
-        key={p}
-        layout
-        initial={{ opacity: 0, x: -6 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -6 }}
-        className={clsx("group flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm", openFile === p ? "bg-accent-soft" : "hover:bg-surface-2")}
-      >
+      <motion.li key={`d:${r.path}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={rowCls(false)} role="none">
+        {indent(r.depth)}
+        <button
+          role="treeitem"
+          aria-expanded={r.open}
+          aria-selected={false}
+          aria-level={r.depth + 1}
+          className="flex min-w-0 flex-1 items-center gap-1.5 py-1 text-left"
+          onClick={() => toggle(r.path)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowRight") toggle(r.path, true);
+            if (e.key === "ArrowLeft") toggle(r.path, false);
+          }}
+          title={r.path}
+        >
+          <ChevronRight className={clsx("size-3.5 shrink-0 text-fg-3 transition-transform", r.open && "rotate-90")} aria-hidden />
+          <Icon className="size-4 shrink-0 text-fg-3" aria-hidden />
+          <span className={clsx("truncate font-mono text-[13px]", r.state === "modified" && "text-warn", r.state === "new" && "text-ok")}>{r.name}</span>
+          {!r.open && <span className="shrink-0 font-mono text-[11px] text-fg-3">{r.count}</span>}
+        </button>
+        {r.state !== "clean" && <span aria-hidden className={clsx("size-1.5 shrink-0 rounded-full", r.state === "new" ? "bg-ok" : "bg-warn")} />}
+        <span className="flex shrink-0 items-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+          <RowBtn label={l(`New file in ${r.path}`, `Nouveau fichier dans ${r.path}`)} onClick={() => startCreate(r.path)}>
+            <FilePlus2 className="size-3.5" />
+          </RowBtn>
+          <RowBtn
+            label={l(`Delete folder ${r.path}`, `Supprimer le dossier ${r.path}`)}
+            onClick={() => {
+              if (window.confirm(l(`Delete ${r.path}/ and its ${r.count} file(s)?`, `Supprimer ${r.path}/ et ses ${r.count} fichier(s) ?`))) deleteFolder(r.path);
+            }}
+          >
+            <Trash2 className="size-3.5" />
+          </RowBtn>
+        </span>
+      </motion.li>
+    );
+  };
+
+  const fileRow = (r: Extract<Row, { type: "file" }>) => {
+    const p = r.path;
+    return (
+      <motion.li key={p} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -6 }} className={rowCls(openFile === p)} role="none">
+        {indent(r.depth)}
+        {/* Files line up with folder names: a chevron-wide spacer. */}
+        <span aria-hidden className="w-3.5 shrink-0" />
         {renaming === p ? (
           <form
-            className="flex flex-1 items-center gap-1"
+            className="flex flex-1 items-center gap-1 py-0.5"
             onSubmit={(e) => {
               e.preventDefault();
               renameFile(p, renameTo.trim());
@@ -124,15 +252,20 @@ export function FilesPanel({ onOpen }: { onOpen?: (path: string) => void }) {
             </button>
           </form>
         ) : (
-          <button className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={() => open(p)}>
+          <button
+            role="treeitem"
+            aria-level={r.depth + 1}
+            aria-selected={openFile === p}
+            className="flex min-w-0 flex-1 items-center gap-1.5 py-1 text-left"
+            onClick={() => open(p)}
+            onKeyDown={(e) => e.key === "F2" && (setRenaming(p), setRenameTo(p))}
+            title={p}
+          >
             <KindIcon path={p} />
-            <span className="truncate font-mono text-[13px]">
-              {slash >= 0 && <span className="text-fg-3">{shown.slice(0, slash + 1)}</span>}
-              {shown.slice(slash + 1)}
-            </span>
+            <span className="truncate font-mono text-[13px]">{r.name}</span>
           </button>
         )}
-        <StateBadge state={st} />
+        <StateBadge state={fileState(world, p)} />
         <span className="flex shrink-0 items-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
           <RowBtn
             label={l(`Rename ${p}`, `Renommer ${p}`)}
@@ -151,21 +284,30 @@ export function FilesPanel({ onOpen }: { onOpen?: (path: string) => void }) {
     );
   };
 
+  const row = (r: Row) => (r.type === "dir" ? dirRow(r) : fileRow(r));
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold text-fg-3">~/project</p>
           <p className="text-[11px] text-fg-3">{changed ? l(`${changed} changed since the last commit`, `${changed} modifiés depuis le dernier commit`) : l("Everything committed", "Tout est commité")}</p>
         </div>
-        <button onClick={() => setCreating(true)} className="flex items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-xs text-fg-2 hover:border-line-strong hover:text-fg">
-          <FilePlus2 className="size-3.5" /> {l("New file", "Nouveau fichier")}
-        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          {folders.size > 0 && (
+            <RowBtn label={anyOpen ? l("Collapse all folders", "Replier tous les dossiers") : l("Expand all folders", "Déplier tous les dossiers")} onClick={collapseAll}>
+              {anyOpen ? <ChevronsDownUp className="size-3.5" /> : <ChevronsUpDown className="size-3.5" />}
+            </RowBtn>
+          )}
+          <button onClick={() => startCreate()} className="flex items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-xs text-fg-2 hover:border-line-strong hover:text-fg">
+            <FilePlus2 className="size-3.5" /> {l("New file", "Nouveau fichier")}
+          </button>
+        </div>
       </div>
-      <ul className="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-2 pb-3" aria-label={l("Files", "Fichiers")}>
+      <ul className="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-2 pb-3" role="tree" aria-label={l("Files", "Fichiers")}>
         <AnimatePresence initial={false}>
           {creating && (
-            <motion.li initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="px-1 py-1">
+            <motion.li key="~new" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="px-1 py-1" role="none">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -177,7 +319,7 @@ export function FilesPanel({ onOpen }: { onOpen?: (path: string) => void }) {
                   autoFocus
                   value={newName}
                   onChange={(e) => setNewName(e.target.value.replace(/\s/g, ""))}
-                  onBlur={() => !newName && setCreating(false)}
+                  onBlur={() => (!newName || newName.endsWith("/")) && setCreating(false)}
                   onKeyDown={(e) => e.key === "Escape" && setCreating(false)}
                   placeholder={l("e.g. .claude/skills/demo/SKILL.md", "ex. .claude/skills/demo/SKILL.md")}
                   className="min-w-0 flex-1 rounded-lg border border-accent/60 bg-surface-2 px-2 py-1 font-mono text-xs outline-none"
@@ -189,13 +331,13 @@ export function FilesPanel({ onOpen }: { onOpen?: (path: string) => void }) {
               </form>
             </motion.li>
           )}
-          {project.map(row)}
-          {home.length > 0 && (
-            <motion.li key="~home" layout className="mt-3 flex items-center gap-1.5 px-2 pb-1 text-[11px] font-semibold text-fg-3">
+          {projectRows.map(row)}
+          {homeRows.length > 0 && (
+            <motion.li key="~home" className="mt-3 flex items-center gap-1.5 px-2 pb-1 text-[11px] font-semibold text-fg-3" role="none">
               <Home className="size-3.5" /> {l("Your home folder (~)", "Ton dossier perso (~)")}
             </motion.li>
           )}
-          {home.map(row)}
+          {homeRows.map(row)}
         </AnimatePresence>
       </ul>
       <details className="border-t border-line px-3 py-2 text-[11px] text-fg-3">

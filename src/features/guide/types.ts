@@ -13,6 +13,8 @@ export interface DocPage {
   body: Txt;
   /** The lesson that practises this guide. */
   lesson?: string;
+  /** Other lessons on the same topic. */
+  more?: string[];
   /** Cheat sheets get a Print button and print-friendly layout. */
   printable?: boolean;
 }

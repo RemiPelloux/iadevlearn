@@ -3,6 +3,7 @@ import type { DocPage } from "../types";
 export const GUIDE_PAGES: DocPage[] = [
   {
     slug: "agents",
+    more: ["gemini-cli", "cursor-agent"],
     section: "guides",
     icon: "Bot",
     lesson: "what-is-an-agent",
@@ -72,6 +73,7 @@ Lance-le dans un dossier de projet en tapant sa commande (\`claude\`, \`codex\`,
   },
   {
     slug: "prompting",
+    more: ["iterate", "errors-and-screenshots"],
     section: "guides",
     icon: "MessageSquareText",
     lesson: "first-prompt",
@@ -200,6 +202,7 @@ Claude Code, Codex et Gemini CLI peuvent résumer la conversation pour libérer 
   },
   {
     slug: "plan-verify",
+    more: ["review-diff", "agent-commits"],
     section: "guides",
     icon: "ListChecks",
     lesson: "plan-verify",
@@ -255,6 +258,7 @@ Lis le diff. \`git diff\` dans le terminal, ou la vue [[Changements]] de l'édit
   },
   {
     slug: "rules",
+    more: ["one-rulebook", "good-rules", "folder-rules", "cursor-rules"],
     section: "guides",
     icon: "BookOpenCheck",
     lesson: "what-are-rules",
@@ -362,6 +366,7 @@ Les commandes exactes entre backticks, les conventions qui sortent de l'ordinair
   },
   {
     slug: "skills",
+    more: ["write-skill", "skill-resources"],
     section: "guides",
     icon: "Sparkles",
     lesson: "what-is-a-skill",
@@ -621,6 +626,7 @@ Prends un workflow pour une procédure que tu lances exprès, au moment que tu c
   },
   {
     slug: "orca",
+    more: ["agent-team", "orchestration", "automations"],
     section: "guides",
     icon: "GitBranch",
     lesson: "parallel-worktrees",
@@ -704,6 +710,8 @@ Les règles partagées comptent encore plus ici : chaque worktree reçoit une co
   },
   {
     slug: "mcp",
+    lesson: "what-is-mcp",
+    more: ["mcp-context-cost", "hooks", "subagents"],
     section: "guides",
     icon: "Plug",
     title: { en: "MCP servers", fr: "Les serveurs MCP" },
@@ -750,6 +758,8 @@ Un serveur MCP est un programme qui tourne sur ton ordinateur et voit ce que l'a
   },
   {
     slug: "safety",
+    lesson: "secrets",
+    more: ["prompt-injection", "review-diff", "capstone"],
     section: "guides",
     icon: "ShieldAlert",
     title: { en: "Working safely with agents", fr: "Travailler avec des agents en sécurité" },

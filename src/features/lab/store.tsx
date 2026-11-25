@@ -51,6 +51,8 @@ export interface LabState {
   /** UI-driven file edits (explorer/editor) go through the same canonical world. */
   writeFile: (path: string, content: string) => void;
   deleteFile: (path: string) => void;
+  /** Deletes every file under a folder in one step (one history entry). */
+  deleteFolder: (dir: string) => void;
   renameFile: (from: string, to: string) => void;
   reset: (world: World, label?: string) => void;
   travel: (index: number) => void;
@@ -144,6 +146,17 @@ export function createLabStore(initial: World, onResult?: LabState["onResult"], 
         delete files[path];
         get().closeTab(path);
         edited({ ...w, files }, `delete ${path}`, [path]);
+      },
+      deleteFolder: (dir) => {
+        const w = get().world;
+        const gone = Object.keys(w.files).filter((p) => p.startsWith(`${dir}/`));
+        if (!gone.length) return;
+        const files = { ...w.files };
+        for (const p of gone) {
+          delete files[p];
+          get().closeTab(p);
+        }
+        edited({ ...w, files }, `delete ${dir}/`, gone);
       },
       renameFile: (from, to) => {
         const w = get().world;

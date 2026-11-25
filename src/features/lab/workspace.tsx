@@ -89,6 +89,9 @@ export function Workspace({
   const [termMax, setTermMax] = useState(false);
   const maxTermH = () => (typeof window === "undefined" ? 900 : window.innerHeight - 160);
   const [sideW, setSideW] = usePersistentNumber("iadl-side-w", 360);
+  // Very wide screens: the terminal sits to the right of the agent view instead of under it.
+  const isWide = useMedia("(min-width: 1800px)", false);
+  const [termW, setTermW] = usePersistentNumber("iadl-term-w", () => (typeof window === "undefined" ? 760 : Math.round(Math.max(560, window.innerWidth * 0.32))));
 
   // A request from the simulation (e.g. `edit CLAUDE.md`, clicking a run) brings the relevant panel forward.
   const panelRequest = useLab((s) => s.panelRequest);
@@ -124,10 +127,10 @@ export function Workspace({
       onToggleMaximize={compact ? undefined : () => setTermMax((m) => !m)}
     />
   );
-  const editing = ui.editor && openFile && openFile in world.files ? openFile : null;
+  // Any file can always be opened: `ui.editor` only decides whether lessons open files for the learner.
+  const editing = openFile && openFile in world.files ? openFile : null;
   // Desktop and tablet open files as tabs in the main area, like an IDE; phones open them full screen in the Files tab.
-  const filesOrEditor =
-    !isTablet && editing ? <Editor key={editing} path={editing} onBack={() => setOpenFile(null)} /> : <FilesPanel onOpen={(p) => (ui.editor ? setOpenFile(p) : setOpenFile(null))} />;
+  const filesOrEditor = !isTablet && editing ? <Editor key={editing} path={editing} onBack={() => setOpenFile(null)} /> : <FilesPanel />;
 
   const tabs: Array<{ id: SideTab; label: string; icon: ReactNode; show: boolean }> = [
     { id: "guide", label: t("lab.workspace.guide"), icon: <BookOpen className="size-3.5" />, show: !!guide && !isDesktop },
@@ -164,11 +167,22 @@ export function Workspace({
   );
 
   const fileTabs = tabsOpen.filter((p) => p in world.files);
-  const center = (
+  const center = isWide && !termMax ? (
+    <div className="flex h-full min-h-0">
+      <div className="flex min-w-0 flex-1 flex-col">
+        {fileTabs.length > 0 && <EditorTabs tabs={fileTabs} active={editing} onSelect={setOpenFile} onClose={closeTab} />}
+        <div className="relative min-h-0 flex-1 overflow-hidden">{editing ? <Editor key={editing} path={editing} /> : agentView}</div>
+      </div>
+      <ResizeHandle orientation="vertical" onDrag={(d) => setTermW((w) => Math.min(1400, Math.max(420, w + d)))} />
+      <div style={{ width: termW }} className="min-h-0 shrink-0">
+        {terminal()}
+      </div>
+    </div>
+  ) : (
     <div className="flex h-full min-h-0 flex-col">
       {!termMax && (
         <>
-          {ui.editor && fileTabs.length > 0 && <EditorTabs tabs={fileTabs} active={editing} onSelect={setOpenFile} onClose={closeTab} />}
+          {fileTabs.length > 0 && <EditorTabs tabs={fileTabs} active={editing} onSelect={setOpenFile} onClose={closeTab} />}
           <div className="relative min-h-0 flex-1 overflow-hidden">{editing ? <Editor key={editing} path={editing} /> : agentView}</div>
           <ResizeHandle
             orientation="horizontal"

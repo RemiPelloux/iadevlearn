@@ -26,7 +26,8 @@ describe("docs", () => {
     for (const p of DOC_PAGES)
       for (const lang of ["en", "fr"] as const)
         for (const m of p.body[lang].matchAll(/\]\((\/[^)\s]*)\)/g)) expect(ok(m[1]), `${p.slug} (${lang}) → ${m[1]}`).toBe(true);
-    for (const p of DOC_PAGES) if (p.lesson) expect(ALL_LESSON_DEFS.some((l) => l.id === p.lesson), p.slug).toBe(true);
+    for (const p of DOC_PAGES)
+      for (const id of [p.lesson, ...(p.more ?? [])].filter(Boolean)) expect(ALL_LESSON_DEFS.some((l) => l.id === id), `${p.slug} → ${id}`).toBe(true);
   });
 
   it("uses plain punctuation: no em or en dashes in the prose", () => {

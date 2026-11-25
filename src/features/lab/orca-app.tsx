@@ -30,7 +30,7 @@ function useRunner() {
 }
 
 /** A simplified, simulated replica of the Orca desktop app, driven by the simulator's worktrees. */
-export function OrcaApp({ world }: { world: World }) {
+export function OrcaApp({ world, className }: { world: World; className?: string }) {
   const l = useL();
   const run = useRunner();
   const [selected, setSelected] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export function OrcaApp({ world }: { world: World }) {
   const runsOf = (w: Worktree) => world.runs.filter((r) => r.where === w.name);
 
   return (
-    <div className="terminal flex h-[27rem] flex-col overflow-hidden rounded-xl bg-[#1b1a1d] text-[13px] text-[var(--t-text)] shadow-[0_18px_44px_-18px_rgba(0,0,0,0.55)] ring-1 ring-black/30" aria-label={l("Orca (simulated)", "Orca (simulé)")}>
+    <div className={clsx("terminal flex flex-col overflow-hidden rounded-xl bg-[#1b1a1d] text-[13px] text-[var(--t-text)] shadow-[0_18px_44px_-18px_rgba(0,0,0,0.55)] ring-1 ring-black/30", className ?? "h-[27rem]")} aria-label={l("Orca (simulated)", "Orca (simulé)")}>
       <div className="flex h-9 shrink-0 items-center gap-2 border-b border-white/[0.06] px-3">
         <span className="flex gap-1.5" aria-hidden>
           <span className="size-2.5 rounded-full bg-[#ff5f57]" />

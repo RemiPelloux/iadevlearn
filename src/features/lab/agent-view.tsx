@@ -310,12 +310,7 @@ export function AgentView({ world, events, eventKey, compact, orca }: { world: W
       </div>
     );
 
-  return (
-    <div className="scrollbar-thin h-full overflow-y-auto bg-dots">
-      <LayoutGroup>
-        <div className={clsx("mx-auto flex flex-col gap-4 p-4 sm:p-5", orca ? "max-w-5xl" : "max-w-3xl")}>
-          {orca && <OrcaApp world={world} />}
-
+  const contextCard = (
           <section className="rounded-xl border border-line bg-elevated/90 p-3 shadow-[var(--shadow-card)]" aria-live="polite">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <ToolBadge tool={shown.tool} size="md" />
@@ -368,7 +363,8 @@ export function AgentView({ world, events, eventKey, compact, orca }: { world: W
               </AnimatePresence>
             </ul>
           </section>
-
+  );
+  const loopCard = (
           <section className="rounded-xl border border-line bg-elevated/90 p-3 shadow-[var(--shadow-card)]">
             <div className="mb-3 flex items-center gap-2">
               <h3 className="text-xs font-semibold text-fg-2">{l("Agent loop", "Boucle de l'agent")}</h3>
@@ -386,7 +382,25 @@ export function AgentView({ world, events, eventKey, compact, orca }: { world: W
               <p className="mt-3 text-[11px] text-fg-3">{l("Send a prompt to an agent to see it work through the loop.", "Envoie un prompt à un agent pour le voir parcourir la boucle.")}</p>
             )}
           </section>
-        </div>
+  );
+
+  return (
+    <div className="@container scrollbar-thin h-full overflow-y-auto bg-dots">
+      <LayoutGroup>
+        {orca ? (
+          <div className="grid gap-4 p-4 @min-[900px]:h-full @min-[900px]:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] @min-[1600px]:grid-cols-[minmax(0,1fr)_440px]">
+            <OrcaApp world={world} className="h-[27rem] @min-[900px]:h-full @min-[900px]:min-h-[22rem]" />
+            <div className="scrollbar-thin flex min-w-0 flex-col gap-4 @min-[900px]:min-h-0 @min-[900px]:overflow-y-auto">
+              {contextCard}
+              {loopCard}
+            </div>
+          </div>
+        ) : (
+          <div className="mx-auto grid max-w-[1700px] items-start gap-4 p-4 @min-[820px]:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]">
+            {contextCard}
+            {loopCard}
+          </div>
+        )}
       </LayoutGroup>
     </div>
   );

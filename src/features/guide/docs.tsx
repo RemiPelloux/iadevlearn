@@ -257,6 +257,19 @@ export function DocArticle({ slug }: { slug: string }) {
             )}
           </div>
         )}
+        {page.more && page.more.length > 0 && (
+          <div className="no-print mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+            <span className="text-fg-3">{l("More practice:", "Pour aller plus loin :")}</span>
+            {page.more.map((id) => {
+              const more = getLessonDef(id);
+              return more ? (
+                <Link key={id} href={`/learn/${id}`} className="font-medium text-accent-fg underline decoration-accent/40 underline-offset-[3px] hover:decoration-accent">
+                  {more.title[locale]}
+                </Link>
+              ) : null;
+            })}
+          </div>
+        )}
         <div className="mt-8 border-t border-line pt-8">
           <Markdown source={body} copyLabel={l("Copy", "Copier")} copiedLabel={l("Copied", "Copié")} />
         </div>
